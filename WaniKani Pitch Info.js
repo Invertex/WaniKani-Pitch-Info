@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.24
+// @version      0.25
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -121,7 +121,7 @@ function parsePage()
         if(spanElem != null){
             reading = spanElem.textContent.replace(/\s+/g, '').split(',')[0];
 			for(i = 0; i < reading.length; i++){
-			console.log(reading.charCodeAt(i));
+			//console.log(reading.charCodeAt(i)); //To be used to get all needed char codes for potentially faster character comparison
 			}
         }
 		
@@ -310,6 +310,16 @@ function getPitchType(pitchNum)
 	}
 	return pattern;
 }
+//Moved outside of function so we aren't re-initializing it with each call
+	var pitchPatterns = 
+	[
+		/* 1 kana */[ [0,1], [1,0] ],
+		/* 2 kana */[ [0,1,1], [1,0,0], [0,1,0] ],   
+		/* 3 kana */[ [0,1,1,1], [1,0,0,0], [0,1,0,0], [0,1,1,0] ],
+		/* 4 kana */[ [0,1,1,1,1], [1,0,0,0,0], [0,1,0,0,0], [0,1,1,0,0], [0,1,1,1,0] ],
+		/* 5 kana */[ [0,1,1,1,1,1], [1,0,0,0,0,0], [0,1,0,0,0,0], [0,1,1,0,0,0], [0,1,1,1,0,0], [0,1,1,1,1,0] ],
+		/* 6 kana */[ [0,1,1,1,1,1,1], [1,0,0,0,0,0,0], [0,1,0,0,0,0,0], [0,1,1,0,0,0,0], [0,1,1,1,0,0,0], [0,1,1,1,1,0,0], [0,1,1,1,1,1,0] ]
+	];
 
 //Pitch pattern drawing by https://github.com/blaketrahan
 function drawPitchDiagram(pitchNum, patternType)
@@ -317,7 +327,9 @@ function drawPitchDiagram(pitchNum, patternType)
 	/*
 		Prepare elements for drawing
 	*/
-
+	
+	if(pitchNum < 0) { return; }
+	
 	// use the font size to calculate height and width
 	var fontSize =  window.getComputedStyle(kanaElem, null).getPropertyValue('font-size');
 	fontSize = parseFloat(fontSize); 
@@ -381,19 +393,9 @@ function drawPitchDiagram(pitchNum, patternType)
 		svg.appendChild(line);
 	}
 
-	var pitchPatterns = 
-	[
-		/* 1 kana */[ [0,1], [1,0] ],
-		/* 2 kana */[ [0,1,1], [1,0,0], [0,1,0] ],   
-		/* 3 kana */[ [0,1,1,1], [1,0,0,0], [0,1,0,0], [0,1,1,0] ],
-		/* 4 kana */[ [0,1,1,1,1], [1,0,0,0,0], [0,1,0,0,0], [0,1,1,0,0], [0,1,1,1,0] ],
-		/* 5 kana */[ [0,1,1,1,1,1], [1,0,0,0,0,0], [0,1,0,0,0,0], [0,1,1,0,0,0], [0,1,1,1,0,0], [0,1,1,1,1,0] ],
-		/* 6 kana */[ [0,1,1,1,1,1,1], [1,0,0,0,0,0,0], [0,1,0,0,0,0,0], [0,1,1,0,0,0,0], [0,1,1,1,0,0,0], [0,1,1,1,1,0,0], [0,1,1,1,1,1,0] ]
-	];
-
 	/* find pattern from table */
 	var x = pitchNum;
-	var y = kanaLength;
+	var y = kanaLength - 1; //Our array is 0-based, so we need to subtract 1 from out length value.
 	var pattern = pitchPatterns[y][x];
 
 	// get the points from pattern
