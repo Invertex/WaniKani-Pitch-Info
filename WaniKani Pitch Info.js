@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.22
+// @version      0.23
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -107,6 +107,7 @@ function parsePage()
 	}
     if(tmpSessionElem != null)
     {
+		spanElem = null;
         spanElem = findChildElemWithAttr(tmpSessionElem, "span", "lang");
         if(spanElem == null){
             spanElem = findChildElemWithAttr(tmpSessionElem, "p", "lang");
@@ -242,7 +243,7 @@ function getKanaInfo()
 
 	// Get sibling that contains vocabulary kana
 	kanaElem = spanElem;
-	if (kanaElem == null)
+	if (kanaElem == null || reading == null)
 	{ 
 		console.log("Failed to find kana element.");
 		return;
