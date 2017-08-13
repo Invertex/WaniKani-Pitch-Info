@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.21
+// @version      0.22
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -40,6 +40,7 @@ var savedReading = "";
 var sessionReadingElem;
 var pitchInfoElem;
 var descriptionElem;
+var spanElem;
 var readingElem;
 var reading = "";
 var pitchInfoLoadTxt = "Loading Pitch info...";
@@ -106,7 +107,7 @@ function parsePage()
 	}
     if(tmpSessionElem != null)
     {
-        var spanElem = findChildElemWithAttr(tmpSessionElem, "span", "lang");
+        spanElem = findChildElemWithAttr(tmpSessionElem, "span", "lang");
         if(spanElem == null){
             spanElem = findChildElemWithAttr(tmpSessionElem, "p", "lang");
         }
@@ -237,26 +238,17 @@ function getKanaInfo()
 {
 	// get information about the kana
 
-	if (pitchInfoElem == null){ return; }
+	if (reading == null){ return; }
 
 	// Get sibling that contains vocabulary kana
-	kanaElem = getKanaElemThruSibling(pitchInfoElem);
+	kanaElem = spanElem;
 	if (kanaElem == null)
-	{
+	{ 
 		console.log("Failed to find kana element.");
 		return;
 	}
-
-	// get number of kana
-	kana = kanaElem.innerText || null;
-	if (kana == null)
-	{
-		console.log("Failed to find kana innerText.");
-		return;
-	}
-
 	// remove white space, and count kana
-	kana = kana.trim();
+	kana = reading;
 	kanaLength = kana.length;
 	kanaPlusParticleLength = kanaLength + 1;
 }
@@ -326,15 +318,16 @@ function drawPitchDiagram(pitchNum, patternType)
 
 	// absolute positioned container
 	var pitchDiagram = document.createElement("DIV");
-	pitchDiagram.style.position = "absolute";
-	pitchDiagram.style.left = "0";
+	pitchDiagram.style.position = "relative";
+	pitchDiagram.style.left = "2";
 	pitchDiagram.style.top = "0";
+	pitchDiagram.style.bottom = "2";
+	pitchDiagram.style.marginBottom = "0";
 	pitchDiagram.style.width = svg_w + "px";
 	pitchDiagram.style.height = svg_h + "px";
-
 	// add space to parent element
 	kanaElem.style.position = "relative";
-	kanaElem.style.paddingTop = fontSize + "px";
+	//kanaElem.style.paddingTop = fontSize + "px"; //using relative now, this causes issues
 
 	// the svg which will be drawn to
 	var namespace = "http://www.w3.org/2000/svg";
@@ -412,8 +405,9 @@ function drawPitchDiagram(pitchNum, patternType)
 	}
 	
 	pitchDiagram.appendChild(svg);
-	kanaElem.appendChild(pitchDiagram);
-	
+	sessionReadingElem.appendChild(pitchDiagram);
+	sessionReadingElem.appendChild(spanElem);
+	sessionReadingElem.appendChild(pitchInfoElem);
 	return pitchDiagram;
 }
 
