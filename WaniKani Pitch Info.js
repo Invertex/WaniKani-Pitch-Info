@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.28
+// @version      0.29
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -318,7 +318,8 @@ function getPitchType(pitchNum)
 		/* 3 kana */[ [0,1,1,1], [1,0,0,0], [0,1,0,0], [0,1,1,0] ],
 		/* 4 kana */[ [0,1,1,1,1], [1,0,0,0,0], [0,1,0,0,0], [0,1,1,0,0], [0,1,1,1,0] ],
 		/* 5 kana */[ [0,1,1,1,1,1], [1,0,0,0,0,0], [0,1,0,0,0,0], [0,1,1,0,0,0], [0,1,1,1,0,0], [0,1,1,1,1,0] ],
-		/* 6 kana */[ [0,1,1,1,1,1,1], [1,0,0,0,0,0,0], [0,1,0,0,0,0,0], [0,1,1,0,0,0,0], [0,1,1,1,0,0,0], [0,1,1,1,1,0,0], [0,1,1,1,1,1,0] ]
+		/* 6 kana */[ [0,1,1,1,1,1,1], [1,0,0,0,0,0,0], [0,1,0,0,0,0,0], [0,1,1,0,0,0,0], [0,1,1,1,0,0,0], [0,1,1,1,1,0,0], [0,1,1,1,1,1,0] ],
+		/* 7 kana */[ [0,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0], [0,1,0,0,0,0,0,0], [0,1,1,0,0,0,0,0], [0,1,1,1,0,0,0,0], [0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,0], [0,1,1,1,1,1,1,0] ]
 	];
 
 //Pitch pattern drawing by https://github.com/blaketrahan
@@ -444,11 +445,11 @@ function writeToPage(pitchNum, pitchNum2)
 	{
 		var appendHtml = "";
 		var styles = "display:inline;margin-right: 0.5em;font-size: 11px;font-weight: bold;letter-spacing: 0;border-bottom: none;line-height: 1em;text-shadow: 0 1px 0 #fff;color: #999;";
-		appendHtml = "<h2 style='"+styles+"'>PITCH PATTERN<br/></h2>" + GenerateColoredPatternText(patternType) + GeneratePatternLink(vocab, pitchNum, patternType);
+		appendHtml = "<h2 style='"+styles+"'>PITCH PATTERN<br/></h2>" + GenerateColoredPatternText(patternType) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum, patternType);
 		if(pitchNum2 != null)
 		{
 			var patternType2 = getPitchType(pitchNum2);
-			appendHtml += "<br/>or<br/>" + GenerateColoredPatternText(patternType2) + GeneratePatternLink(vocab, pitchNum2, patternType2);
+			appendHtml += "<br/>or<br/>" + GenerateColoredPatternText(patternType2) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum2, patternType2);
 		}	
 	}
 		
