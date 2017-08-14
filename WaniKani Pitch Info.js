@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.26
+// @version      0.27
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -54,7 +54,7 @@ var kanaPlusParticleLength = 0;
 var colorCode = "#000000";		
 //for future use to adjust points for digraphs
 var hiraDigraphs = ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'っ', 'ゃ', 'ゅ', 'ょ', 'ゎ', 'ゕ', 'ゖ'];
-var kataDigraphs = ['ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ッ', 'ャ', 'ュ', 'ョ', 'ヵ', 'ゕ', 'ヶ'];
+var kataDigraphs = ['ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ッ', 'ャ', 'ュ', 'ョ', 'ヵ', 'ヵ', 'ヶ'];
 
 $(document).ready(function()
 {
@@ -260,8 +260,6 @@ function getKanaInfo()
 	kanaLength = kana.length;
 	kanaPlusParticleLength = kanaLength + 1;
 }
-function getPitchType(pitchNum)
-{							   
 	// Get the color and the pitch pattern name
 	var patternObj = {
 			heiban : {
@@ -290,7 +288,9 @@ function getPitchType(pitchNum)
 				color: "#CCCCCC",
 			}
 		};
-		
+
+function getPitchType(pitchNum)
+{							   	
 	var pattern = patternObj.unknown;
 	
 	if(pitchNum >= 0 && kana != null && kanaElem != null && kanaLength != null)
