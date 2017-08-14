@@ -14,7 +14,7 @@
 // ==/UserScript==
 
  /*
-	TODO @nasatitan:
+	TODO:
 		wanikani note: user jjatria
 			If what you have is a number, then one way to do this
 			would be to split the word into kana, and apply the
@@ -396,12 +396,25 @@ function drawPitchDiagram(pitchNum, patternType)
 	/* find pattern from table */
 	var x = pitchNum;
 	var y = kanaLength - 1; //Our array is 0-based, so we need to subtract 1 from out length value.
-	var pattern = pitchPatterns[y][x];
+	var pattern = pitchPatterns[y][x].slice(); // copy by value, in case we move pitch accent
 
 	// get the points from pattern
 	for (var i = 1; i <= kanaPlusParticleLength; i++)
 	{
-		calculatePoints(pattern[i-1], i/(kanaPlusParticleLength));
+		var k = i - 1; // to make this more readable
+
+		// if the current kana bears the pitch accent AND the current kana is a digraph
+		if (k > 0 && k < kanaLength && (pattern[k] == 1 && pattern[k-1] != pattern[k]) && (kataDigraphs.includes(kana[k]) || hiraDigraphs.includes(kana[k])))
+		{
+			// todo @blaketrahan: should this push back all subsequent points as well if it follows nakadaka pattern?
+			// move the pitch accent within the pattern
+			pattern[k+1] = pattern[k];
+			pattern[k] = 0;
+			calculatePoints(pattern[k], i/(kanaPlusParticleLength));
+		}
+		else {
+			calculatePoints(pattern[k], i/(kanaPlusParticleLength));			
+		}
 	}
 	// draw lines between points
 	for (var i = 0; i < points.length - 1; i++)
