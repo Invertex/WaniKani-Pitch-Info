@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.32
+// @version      0.33
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -323,7 +323,7 @@ function getPitchType(pitchNum)
 	if(pitchNum >= 0 && kana != null && kanaElem != null && kanaLength != null)
 	{
 		if(pitchNum == 0) { pattern = patternObj.heiban; }
-		else if (pitchNum == 1) { pattern = patternObj.odaka; }
+		else if (pitchNum == 1) { pattern = patternObj.atamadaka; }
 		else if (pitchNum > 1)
 		{
 			if(pitchNum == kanaLength){
