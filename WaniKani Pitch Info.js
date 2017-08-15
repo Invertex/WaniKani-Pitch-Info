@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.30
+// @version      0.31
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -106,11 +106,14 @@ $(document).ready(function()
 
     descriptionElem = document.getElementsByClassName('pure-g-r')[0];
     if(descriptionElem != null){
-        observer.observe(descriptionElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true}); 
+        observer.observe(descriptionElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
     }
-    readingElem = document.getElementById('supplement-voc-reading');
-    if(readingElem != null){
-        observer.observe(readingElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true}); 
+    else
+    {
+        readingElem = document.getElementById('supplement-voc-reading');
+        if(readingElem != null){
+            observer.observe(readingElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
+        }
     }
 });
 
@@ -118,7 +121,7 @@ function parsePage()
 {
     var tmpVocab = "";
     var tmpSessionElem;
-    
+
     var sessionChar = document.getElementById("character"); //Check for seassion character
 	if(sessionChar != null && ($(sessionChar).hasClass('vocabulary') || $('#main-info').hasClass('vocabulary')))
 	{
@@ -131,8 +134,7 @@ function parsePage()
 		else //We must be in Lesson session if there is no "span" element, characters are in first element we got.
 		{
            tmpVocab = sessionChar.innerHTML;
-           var descripDivs = document.getElementById("supplement-voc-reading").getElementsByClassName("col1")[0];
-           tmpSessionElem = descripDivs;
+           tmpSessionElem = document.getElementById("supplement-voc-reading").getElementsByClassName("col1")[0];
         }
 	}
     else //Check for Vocab page element
@@ -156,11 +158,11 @@ function parsePage()
         }
         if(spanElem != null){
             reading = spanElem.textContent.replace(/\s+/g, '').split(',')[0];
-			for(i = 0; i < reading.length; i++){
-			//console.log(reading.charCodeAt(i)); //To be used to get all needed char codes for potentially faster character comparison
-			}
+
+			//for(i = 0; i < reading.length; i++){
+			//    console.log(reading.charCodeAt(i)); //To be used to get all needed char codes for potentially faster character comparison
+			//}
         }
-		
     }
 	if(tmpVocab != null && tmpVocab != "" && !tmpVocab.includes("nbsp") && tmpSessionElem != null && reading != null && reading != "")
 	{
@@ -168,10 +170,10 @@ function parsePage()
         {
 	        tmpSessionElem.setAttribute("vocabpitch", true);
         }
-		
+
         sessionReadingElem = tmpSessionElem;
         pitchInfoElem = sessionReadingElem.getElementsByClassName("pitchInfo")[0];
-		
+
         if(pitchInfoElem == null)
         {
             pitchInfoElem = document.createElement("P");
@@ -183,15 +185,15 @@ function parsePage()
         {
             pitchInfoElem.innerHTML = pitchInfoLoadTxt;
         }
-
-	    if (vocabTable.hasOwnProperty(tmpVocab)) // first check our table
+        vocab = tmpVocab;
+	    if (vocabTable.hasOwnProperty(vocab)) // first check our table
 	    {
-			writeToPage(vocabTable[tmpVocab][0],
-				(typeof vocabTable[tmpVocab][1] === 'undefined') ? null : vocabTable[tmpVocab][1]);
+			writeToPage(vocabTable[vocab][0],
+				(typeof vocabTable[vocab][1] === 'undefined') ? null : vocabTable[tmpVocab][1]);
 	    }
 	    else // query weblio for pitch if not in table
 	    {
-			getVocabPitch(tmpVocab);
+			getVocabPitch(vocab);
 	    }
 	}
 }
@@ -212,8 +214,6 @@ function findChildElemWithAttr(parentElem, elemType, attrType)
 
 function getVocabPitch(inVocab)
 {
-        vocab = inVocab;
-
         GM_xmlhttpRequest({
             method: "GET",
             url: webQuery + inVocab,
@@ -295,7 +295,7 @@ function getKanaInfo()
 	// Get sibling that contains vocabulary kana
 	kanaElem = spanElem;
 	if (kanaElem == null || reading == null)
-	{ 
+	{
 		console.log("Failed to find kana element.");
 		return;
 	}
@@ -306,9 +306,9 @@ function getKanaInfo()
 }
 
 function getPitchType(pitchNum)
-{							   	
+{
 	var pattern = patternObj.unknown;
-	
+
 	if(pitchNum >= 0 && kana != null && kanaElem != null && kanaLength != null)
 	{
 		if(pitchNum == 0) { pattern = patternObj.heiban; }
@@ -333,17 +333,18 @@ function drawPitchDiagram(pitchNum, patternType)
 	/*
 		Prepare elements for drawing
 	*/
-	
+
 	if(pitchNum < 0) { return; }
-	
+
 	// use the font size to calculate height and width
 	var fontSize =  window.getComputedStyle(kanaElem, null).getPropertyValue('font-size');
-	fontSize = parseFloat(fontSize); 
+	fontSize = parseFloat(fontSize);
 	var svg_w = fontSize * kanaPlusParticleLength;
 	var svg_h = fontSize + 10;
 
 	// absolute positioned container
 	var pitchDiagram = document.createElement("DIV");
+	pitchDiagram.className = "pitchDiagram";
 	pitchDiagram.style.position = "relative";
 	pitchDiagram.style.left = "2";
 	pitchDiagram.style.top = "0";
@@ -419,7 +420,7 @@ function drawPitchDiagram(pitchNum, patternType)
 			calculatePoints(pattern[k], i/(kanaPlusParticleLength));
 		}
 		else {
-			calculatePoints(pattern[k], i/(kanaPlusParticleLength));			
+			calculatePoints(pattern[k], i/(kanaPlusParticleLength));
 		}
 	}
 	// draw lines between points
@@ -432,7 +433,7 @@ function drawPitchDiagram(pitchNum, patternType)
 	{
 	  	drawPitchDot(points[i].x, points[i].y, i == points.length - 1);
 	}
-	
+
 	pitchDiagram.appendChild(svg);
 	sessionReadingElem.appendChild(pitchDiagram);
 	sessionReadingElem.appendChild(spanElem);
@@ -455,14 +456,20 @@ function writeToPage(pitchNum, pitchNum2)
 		{
 			var patternType2 = getPitchType(pitchNum2);
 			appendHtml += "<br/>or<br/>" + GenerateColoredPatternText(patternType2) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum2, patternType2);
-		}	
+		}
 	}
-		
+
 	if(pitchInfoElem != null)
 	{
+		var existingDiagrams = sessionReadingElem.getElementsByClassName("pitchDiagram");
+		for(var i = 0; i < existingDiagrams.length; i++)
+		{
+			existingDiagrams[i].outerHTML = "";
+			delete existingDiagrams[i];
+		}
 		pitchInfoElem.innerHTML = appendHtml;
 		drawPitchDiagram(pitchNum, patternType);
-		
+
 		if(pitchNum2 != null)
 		{
 			drawPitchDiagram(pitchNum2, getPitchType(pitchNum2));
@@ -477,5 +484,5 @@ function GeneratePatternLink(vocabInput, pitchNum, patternType)
 
 function GenerateColoredPatternText(patternType)
 {
-	return "<font color=\"" + patternType.color + "\">" + patternType.name + "</font>"; 
+	return "<font color=\"" + patternType.color + "\">" + patternType.name + "</font>";
 }
