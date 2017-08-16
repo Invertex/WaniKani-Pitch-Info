@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.36
+// @version      0.37
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -391,7 +391,7 @@ function drawPitchDiagram(pitchNum, patternType)
 	function drawPitchDot(cx, cy, is_particle)
 	{
 		var circle = document.createElementNS(namespace, "circle");
-		circle.setAttribute("fill", (is_particle) ? "white" : patternType.color);
+		circle.setAttribute("fill", (is_particle) ? "#eeeeee" : patternType.color);
 		circle.setAttribute("stroke",  (is_particle) ? "black" : patternType.color);
 		circle.setAttribute("stroke-width", (is_particle) ? "1" : "0");
 		circle.setAttribute("cx", cx);
