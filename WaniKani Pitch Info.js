@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.34
+// @version      0.35
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -303,6 +303,7 @@ function getKanaInfo()
 	// remove white space, and count kana
 	kana = reading;
 	kanaLength = 0;
+	digraphCount = 0;
 	// do not include digraphs in kana length
 	for (var i = 0; i < kana.length; i++)
 	{
