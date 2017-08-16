@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.35
+// @version      0.36
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -423,13 +423,15 @@ function drawPitchDiagram(pitchNum, patternType)
 	var c = 0; // the current kana
 	for (var i = 1; i <= drawnPoints; i++)
 	{
-		// if the current kana bears the pitch accent AND the current kana is a digraph
-		if (k > 0 && k < kanaLength && (pattern[k] == 1 && pattern[k-1] != pattern[k]) && (kataDigraphs.includes(kana[c]) || hiraDigraphs.includes(kana[c]))) {
+		// Treat digraphs like the previous kana, no change.
+		if ( kataDigraphs.includes(kana[c]) || hiraDigraphs.includes(kana[c]) )
+		{
 			k--;
-		} else if (i == drawnPoints) { // @todo: not sure this is the best way to handle words that end in digraphs
+		}
+		else if (i == drawnPoints) // @todo: not sure this is the best way to handle words that end in digraphs
+		{
 			k = pattern.length-1;
 		}
-
 		calculatePoints(pattern[k], i/(drawnPoints));
 		
 		k++;
