@@ -4,16 +4,18 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.37
+// @version      0.38
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
 // @grant GM_xmlhttpRequest
+// @grant GM_getValue
+// @grant GM_registerMenuCommand
 // @connect weblio.jp/*
 // @connect weblio.jp
 // ==/UserScript==
 
- /*
+/*
 	TODO:
 		wanikani note: user jjatria
 			It might be helpful to know that so-called
@@ -24,7 +26,7 @@
 			vocab: To Think Hard (also is an example of 2 acceptable pitch accents)
 			vocab: Mountain (gets mistaken for kanji instead of vocab, i believe)
 			some single kanji vocab gets mistaken for kanji instead of vocab
-*/ 
+*/
 
 var SHOW_PITCH_DESCRIPTION = true;
 var vocab = "";
@@ -54,102 +56,140 @@ var vocabTable = {"胃痛":[0],"二":[1],"微生物":[2],"名人":[3],"中毒":[
 
 //Moved outside of function so we aren't re-initializing it with each call
 var pitchPatterns = 
-[
-	/* 1 kana */[ [0,1], [1,0] ],
-	/* 2 kana */[ [0,1,1], [1,0,0], [0,1,0] ],   
-	/* 3 kana */[ [0,1,1,1], [1,0,0,0], [0,1,0,0], [0,1,1,0] ],
-	/* 4 kana */[ [0,1,1,1,1], [1,0,0,0,0], [0,1,0,0,0], [0,1,1,0,0], [0,1,1,1,0] ],
-	/* 5 kana */[ [0,1,1,1,1,1], [1,0,0,0,0,0], [0,1,0,0,0,0], [0,1,1,0,0,0], [0,1,1,1,0,0], [0,1,1,1,1,0] ],
-	/* 6 kana */[ [0,1,1,1,1,1,1], [1,0,0,0,0,0,0], [0,1,0,0,0,0,0], [0,1,1,0,0,0,0], [0,1,1,1,0,0,0], [0,1,1,1,1,0,0], [0,1,1,1,1,1,0] ],
-	/* 7 kana */[ [0,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0], [0,1,0,0,0,0,0,0], [0,1,1,0,0,0,0,0], [0,1,1,1,0,0,0,0], [0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,0], [0,1,1,1,1,1,1,0] ]
-];
+    [
+        /* 1 kana */[ [0,1], [1,0] ],
+        /* 2 kana */[ [0,1,1], [1,0,0], [0,1,0] ],   
+        /* 3 kana */[ [0,1,1,1], [1,0,0,0], [0,1,0,0], [0,1,1,0] ],
+        /* 4 kana */[ [0,1,1,1,1], [1,0,0,0,0], [0,1,0,0,0], [0,1,1,0,0], [0,1,1,1,0] ],
+        /* 5 kana */[ [0,1,1,1,1,1], [1,0,0,0,0,0], [0,1,0,0,0,0], [0,1,1,0,0,0], [0,1,1,1,0,0], [0,1,1,1,1,0] ],
+        /* 6 kana */[ [0,1,1,1,1,1,1], [1,0,0,0,0,0,0], [0,1,0,0,0,0,0], [0,1,1,0,0,0,0], [0,1,1,1,0,0,0], [0,1,1,1,1,0,0], [0,1,1,1,1,1,0] ],
+        /* 7 kana */[ [0,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0], [0,1,0,0,0,0,0,0], [0,1,1,0,0,0,0,0], [0,1,1,1,0,0,0,0], [0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,0], [0,1,1,1,1,1,1,0] ]
+    ];
 
 // Get the color and the pitch pattern name
 var patternObj = {
-		heiban : {
-			name: "平板",
-			nameEng: "heiban",
-			color: "#d20ca3",
-		},
-		odaka : {
-			name: "尾高",
-			nameEng: "odaka",
-			color: "#0cd24d",
-		},
-		nakadaka : {
-			name: "中高",
-			nameEng: "nakadaka",
-			color: "#27a2ff",
-		},
-		atamadaka : {
-			name: "頭高",
-			nameEng: "atamadaka",
-			color: "#EA9316",
-		},
-		unknown : {
-			name: "不詳",
-			nameEng: "No pitch value found, click the number for more info.",
-			color: "#CCCCCC",
-		}
-	};
+    heiban : {
+        name: "平板",
+        nameEng: "heiban",
+        color: "#d20ca3",
+    },
+    odaka : {
+        name: "尾高",
+        nameEng: "odaka",
+        color: "#0cd24d",
+    },
+    nakadaka : {
+        name: "中高",
+        nameEng: "nakadaka",
+        color: "#27a2ff",
+    },
+    atamadaka : {
+        name: "頭高",
+        nameEng: "atamadaka",
+        color: "#EA9316",
+    },
+    unknown : {
+        name: "不詳",
+        nameEng: "No pitch value found, click the number for more info.",
+        color: "#CCCCCC",
+    }
+};
 
 $(document).ready(function()
-{
+                  {
     parsePage();
-    
+
     var observer = new MutationObserver(function(mutations)
-    {
-         mutations.forEach(function(mutation)
-         {
-             parsePage();
-         });
+                                        {
+        mutations.forEach(function(mutation)
+                          {
+            parsePage(false);
+        });
     });
 
-    descriptionElem = document.getElementsByClassName('pure-g-r')[0];
-    if(descriptionElem != null){
-        observer.observe(descriptionElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
+    // descriptionElem = document.getElementsByClassName('pure-g-r')[0];
+    // if(descriptionElem != null){
+    // observer.observe(descriptionElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
+    // }
+    // else
+    // {
+    readingElem = document.getElementById('supplement-voc-reading');
+    if(readingElem != null){
+        observer.observe(readingElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
     }
-    else
+    // }
+
+    var forceRefreshObserver = new MutationObserver(function(mutations)
+                                                    {
+        mutations.forEach(function(mutation)
+                          {
+            parsePage(true);
+        });
+    });
+    var infoDropdown = document.getElementById("all-info");
+    if(infoDropdown != null)
     {
-        readingElem = document.getElementById('supplement-voc-reading');
-        if(readingElem != null){
-            observer.observe(readingElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
-        }
+        forceRefreshObserver.observe(infoDropdown, {attributes: true, attributeFilter: ['style'], subtree:true});
+    }
+    var information = document.getElementById("information");
+    if(information != null)
+    {
+        forceRefreshObserver.observe(information, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
+    }
+    var inputButton = document.getElementById("user-response");
+    if(inputButton != null)
+    {
+        //    forceRefreshObserver.observe(inputButton, {attributes: true,  attributeOldValue: true});
     }
 });
 
-function parsePage()
+function buggedPitchDiagramCheck()
 {
+    var existingPitchDiagrams = document.getElementsByClassName("pitchDiagram");
+    for(var i = 0; i < existingPitchDiagrams.length; i++)
+    {
+        var svg = existingPitchDiagrams[i].getElementsByTagName("svg")[0];
+        if(svg == null){
+            existingPitchDiagrams[i].outerHTML = "";
+            delete existingPitchDiagrams[i];
+        }
+    }
+}
+
+function parsePage(forceRefresh)
+{
+    buggedPitchDiagramCheck();
     var tmpVocab = "";
     var tmpSessionElem;
 
     var sessionChar = document.getElementById("character"); //Check for seassion character
-	if(sessionChar != null && ($(sessionChar).hasClass('vocabulary') || $('#main-info').hasClass('vocabulary')))
-	{
-		var sessionVocElem = sessionChar.getElementsByTagName("span")[0]; //Get sub element that contains the characters.
+    if(sessionChar != null && ($(sessionChar).hasClass('vocabulary') || $('#main-info').hasClass('vocabulary')))
+    {
+        var sessionVocElem = sessionChar.getElementsByTagName("span")[0]; //Get sub element that contains the characters.
         if(sessionVocElem != null)
         {
             tmpVocab = sessionVocElem.innerHTML;
             tmpSessionElem = document.getElementById("item-info-reading");
         }
-		else //We must be in Lesson session if there is no "span" element, characters are in first element we got.
-		{
-           tmpVocab = sessionChar.innerHTML;
-           tmpSessionElem = document.getElementById("supplement-voc-reading").getElementsByClassName("col1")[0];
+        else //We must be in Lesson session if there is no "span" element, characters are in first element we got.
+        {
+            tmpVocab = sessionChar.innerHTML;
+            tmpSessionElem = document.getElementById("supplement-voc-reading").getElementsByClassName("col1")[0];
         }
-	}
+    }
     else //Check for Vocab page element
     {
-       var vocabIcon = document.getElementsByClassName("vocabulary-icon")[0];
-	   if(vocabIcon != null)
-	   {
-           tmpVocab = $(vocabIcon.getElementsByTagName("span")[0]).html();
-           tmpSessionElem = document.getElementsByClassName("vocabulary-reading")[0];
+        var vocabIcon = document.getElementsByClassName("vocabulary-icon")[0];
+        if(vocabIcon != null)
+        {
+            tmpVocab = $(vocabIcon.getElementsByTagName("span")[0]).html();
+            tmpSessionElem = document.getElementsByClassName("vocabulary-reading")[0];
         }
-	}
+    }
+    var newReading = "";
     if(tmpSessionElem != null)
     {
-		spanElem = null;
+        spanElem = null;
         spanElem = findChildElemWithAttr(tmpSessionElem, "span", "lang");
         if(spanElem == null){
             spanElem = findChildElemWithAttr(tmpSessionElem, "p", "lang");
@@ -158,51 +198,56 @@ function parsePage()
             spanElem = findChildElemWithAttr(tmpSessionElem, "div", "lang");
         }
         if(spanElem != null){
-            reading = spanElem.textContent.replace(/\s+/g, '').split(',')[0];
-
-			//for(i = 0; i < reading.length; i++){
-			//    console.log(reading.charCodeAt(i)); //To be used to get all needed char codes for potentially faster character comparison
-			//}
+            newReading = spanElem.textContent.replace(/\s+/g, '').split(',')[0];
+            //for(i = 0; i < reading.length; i++){
+            //    console.log(reading.charCodeAt(i)); //To be used to get all needed char codes for potentially faster character comparison
+            //}
         }
     }
-	if(tmpVocab != null && tmpVocab != "" && !tmpVocab.includes("nbsp") && tmpSessionElem != null && reading != null && reading != "")
-	{
-        if(!tmpSessionElem.hasAttribute("vocabpitch"))
-        {
-	        tmpSessionElem.setAttribute("vocabpitch", true);
-        }
+
+    var pitchInfoCheck = document.getElementsByClassName("pitchInfo")[0];
+
+    if(tmpVocab != null && tmpVocab != "" && !tmpVocab.includes("nbsp") && tmpSessionElem != null && newReading != null && newReading != "" && (tmpVocab != vocab || newReading != reading || forceRefresh || pitchInfoCheck == null))
+    {
+        reading = newReading;
+        vocab = tmpVocab;
 
         sessionReadingElem = tmpSessionElem;
-        pitchInfoElem = sessionReadingElem.getElementsByClassName("pitchInfo")[0];
+        var pitchInfoElems = document.getElementsByClassName("pitchInfo");
+        for(var j = 0; j < pitchInfoElems.length; j++)
+        {
+            pitchInfoElems[j].outerHTML = "";
+            delete pitchInfoElems[j];
+        }
+        var existingDiagrams = document.getElementsByClassName("pitchDiagram");
+        for(var i = 0; i < existingDiagrams.length; i++)
+        {
+            existingDiagrams[i].outerHTML = "";
+            delete existingDiagrams[i];
+        }
 
-        if(pitchInfoElem == null)
+        pitchInfoElem = document.createElement("P");
+        pitchInfoElem.className = "pitchInfo";
+        sessionReadingElem.appendChild(pitchInfoElem);
+        pitchInfoElem.innerHTML = pitchInfoLoadTxt;
+
+
+        if (vocabTable.hasOwnProperty(vocab)) // first check our table
         {
-            pitchInfoElem = document.createElement("P");
-            pitchInfoElem.className = "pitchInfo";
-            sessionReadingElem.appendChild(pitchInfoElem);
-            pitchInfoElem.innerHTML = pitchInfoLoadTxt;
+            writeToPage(vocabTable[vocab][0],
+                        (typeof vocabTable[vocab][1] === 'undefined') ? null : vocabTable[tmpVocab][1]);
         }
-        else if((pitchInfoElem.innerHTML != pitchInfoLoadTxt && tmpVocab != vocab) || tmpVocab != vocab)
+        else // query weblio for pitch if not in table
         {
-            pitchInfoElem.innerHTML = pitchInfoLoadTxt;
+            getVocabPitch(vocab);
         }
-        vocab = tmpVocab;
-	    if (vocabTable.hasOwnProperty(vocab)) // first check our table
-	    {
-			writeToPage(vocabTable[vocab][0],
-				(typeof vocabTable[vocab][1] === 'undefined') ? null : vocabTable[tmpVocab][1]);
-	    }
-	    else // query weblio for pitch if not in table
-	    {
-			getVocabPitch(vocab);
-	    }
-	}
+    }
 }
 
 function findChildElemWithAttr(parentElem, elemType, attrType)
 {
     var childElems = parentElem.getElementsByTagName(elemType);
-	
+
     for(i = 0; i < childElems.length; i++)
     {
         if(childElems[i].hasAttribute(attrType))
@@ -215,27 +260,27 @@ function findChildElemWithAttr(parentElem, elemType, attrType)
 
 function getVocabPitch(inVocab)
 {
-        GM_xmlhttpRequest({
-            method: "GET",
-            url: webQuery + inVocab,
-            onload: parseResponse
-        });
+    GM_xmlhttpRequest({
+        method: "GET",
+        url: webQuery + inVocab,
+        onload: parseResponse
+    });
 }
 
 function parseResponse(responseObj)
 {
-	var dparser = new DOMParser();
+    var dparser = new DOMParser();
     var respDoc = dparser.parseFromString(responseObj.responseText, "text/html").documentElement;
-	var vocabResults = respDoc.getElementsByClassName('midashigo');
-    
-	if(vocabResults != null)
+    var vocabResults = respDoc.getElementsByClassName('midashigo');
+
+    if(vocabResults != null)
     {
-		for(i = 0; i < vocabResults.length; i++)
+        for(i = 0; i < vocabResults.length; i++)
         {
             var title = $(vocabResults[i]).attr("title");
-			if(title == vocab && vocabResults[i].textContent.replace(/\s+/g, '').replace("・","").includes(reading))
-			{
-				var spans = vocabResults[i].getElementsByTagName("span");
+            if(title == vocab && vocabResults[i].textContent.replace(/\s+/g, '').replace("・","").includes(reading))
+            {
+                var spans = vocabResults[i].getElementsByTagName("span");
                 if(spans != null)
                 {
                     var numMatch;
@@ -245,7 +290,7 @@ function parseResponse(responseObj)
                         var spanText = spans[s].textContent;
                         if(spanText.includes("［"))
                         {
-			               var parseNum = parseInt(spanText.match(/\d+/g));
+                            var parseNum = parseInt(spanText.match(/\d+/g));
                             if(numMatch == null)
                             {
                                 numMatch = parseNum;
@@ -257,246 +302,256 @@ function parseResponse(responseObj)
                         }
                     }
                     if(numMatch != null)
-				    {
+                    {
                         vocabPitchType = numMatch;
                         writeToPage(numMatch, numMatch2);
                         return null;
-				    }
+                    }
                 }
-			}
-		}
-	}
-   vocabPitchType = -1;
-   writeToPage(vocabPitchType);
+            }
+        }
+    }
+    vocabPitchType = -1;
+    writeToPage(vocabPitchType);
 }
 
- function getKanaElemThruSibling(el)
+function getKanaElemThruSibling(el)
 {
-	// search for sibling element with lang="ja"
-	var tmpKanaElem = null;
-	var s = el.parentNode.firstChild;
-	while(s)
-	{
-		if(s.nodeType === 1 && s !== el && s.getAttribute("lang") == "ja")
-		{
-			tmpKanaElem = s;
-			break;
-		}
-		s = s.nextSibling;
-	}
-	return tmpKanaElem;
+    // search for sibling element with lang="ja"
+    var tmpKanaElem = null;
+    var s = el.parentNode.firstChild;
+    while(s)
+    {
+        if(s.nodeType === 1 && s !== el && s.getAttribute("lang") == "ja")
+        {
+            tmpKanaElem = s;
+            break;
+        }
+        s = s.nextSibling;
+    }
+    return tmpKanaElem;
 }
 
 function getKanaInfo()
 {
-	// get information about the kana
+    // get information about the kana
 
-	if (reading == null){ return; }
+    if (reading == null){ return; }
 
-	// Get sibling that contains vocabulary kana
-	kanaElem = spanElem;
-	if (kanaElem == null || reading == null)
-	{
-		console.log("Failed to find kana element.");
-		return;
-	}
-	// remove white space, and count kana
-	kana = reading;
-	kanaLength = 0;
-	digraphCount = 0;
-	// do not include digraphs in kana length
-	for (var i = 0; i < kana.length; i++)
-	{
-		if ( !kataDigraphs.includes(kana[i]) && !hiraDigraphs.includes(kana[i]) )
-		{
-			kanaLength++;
-		} else {
-			digraphCount++;
-		}
-	}
-	kanaPlusParticleLength = kanaLength + 1;
+    // Get sibling that contains vocabulary kana
+    kanaElem = spanElem;
+    if (kanaElem == null || reading == null)
+    {
+        console.log("Failed to find kana element.");
+        return;
+    }
+    // remove white space, and count kana
+    kana = reading;
+    kanaLength = 0;
+    digraphCount = 0;
+    // do not include digraphs in kana length
+    for (var i = 0; i < kana.length; i++)
+    {
+        if ( !kataDigraphs.includes(kana[i]) && !hiraDigraphs.includes(kana[i]) )
+        {
+            kanaLength++;
+        } else {
+            digraphCount++;
+        }
+    }
+    kanaPlusParticleLength = kanaLength + 1;
 }
 
 function getPitchType(pitchNum)
 {
-	var pattern = patternObj.unknown;
+    var pattern = patternObj.unknown;
 
-	if(pitchNum >= 0 && kana != null && kanaElem != null && kanaLength != null)
-	{
-		if(pitchNum == 0) { pattern = patternObj.heiban; }
-		else if (pitchNum == 1) { pattern = patternObj.atamadaka; }
-		else if (pitchNum > 1)
-		{
-			if(pitchNum == kanaLength){
-				pattern = patternObj.odaka;
-			}
-			else
-			{
-				pattern = patternObj.nakadaka;
-			}
-		}
-	}
-	return pattern;
+    if(pitchNum >= 0 && kana != null && kanaElem != null && kanaLength != null)
+    {
+        if(pitchNum == 0) { pattern = patternObj.heiban; }
+        else if (pitchNum == 1) { pattern = patternObj.atamadaka; }
+        else if (pitchNum > 1)
+        {
+            if(pitchNum == kanaLength){
+                pattern = patternObj.odaka;
+            }
+            else
+            {
+                pattern = patternObj.nakadaka;
+            }
+        }
+    }
+    return pattern;
 }
 
 //Pitch pattern drawing by https://github.com/blaketrahan
 function drawPitchDiagram(pitchNum, patternType)
 {
-	/*
+    /*
 		Prepare elements for drawing
 	*/
 
-	if(pitchNum < 0) { return; }
+    if(pitchNum < 0) { return; }
 
-	// use the font size to calculate height and width
-	var fontSize =  window.getComputedStyle(kanaElem, null).getPropertyValue('font-size');
-	fontSize = parseFloat(fontSize);
-	var svg_w = fontSize * (kanaPlusParticleLength + digraphCount);
-	var svg_h = fontSize + 10;
+    // use the font size to calculate height and width
+    var fontSize =  window.getComputedStyle(kanaElem, null).getPropertyValue('font-size');
+    fontSize = parseFloat(fontSize);
+    var svg_w = fontSize * (kanaPlusParticleLength + digraphCount);
+    var svg_h = fontSize + 10;
 
-	// absolute positioned container
-	var pitchDiagram = document.createElement("DIV");
-	pitchDiagram.className = "pitchDiagram";
-	pitchDiagram.style.position = "relative";
-	pitchDiagram.style.left = "2";
-	pitchDiagram.style.top = "0";
-	pitchDiagram.style.bottom = "2";
-	pitchDiagram.style.marginBottom = "0";
-	pitchDiagram.style.width = svg_w + "px";
-	pitchDiagram.style.height = svg_h + "px";
-	// add space to parent element
-	kanaElem.style.position = "relative";
-	//kanaElem.style.paddingTop = fontSize + "px"; //using relative now, this causes issues
+    // absolute positioned container
+    var pitchDiagram = document.createElement("DIV");
+    pitchDiagram.className = "pitchDiagram";
+    pitchDiagram.style.position = "relative";
+    pitchDiagram.style.left = "2";
+    pitchDiagram.style.top = "0";
+    pitchDiagram.style.bottom = "2";
+    pitchDiagram.style.marginBottom = "0";
+    pitchDiagram.style.width = svg_w + "px";
+    pitchDiagram.style.height = svg_h + "px";
+    // add space to parent element
+    kanaElem.style.position = "relative";
+    //kanaElem.style.paddingTop = fontSize + "px"; //using relative now, this causes issues
 
-	// the svg which will be drawn to
-	var namespace = "http://www.w3.org/2000/svg";
-	var svg = document.createElementNS(namespace, "svg");
-	svg.setAttribute("width",svg_w);
-	svg.setAttribute("height",svg_h);
+    // the svg which will be drawn to
+    var namespace = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(namespace, "svg");
+    svg.setAttribute("width",svg_w);
+    svg.setAttribute("height",svg_h);
 
-	var w = 5; // dot size
+    var w = 5; // dot size
 
-	/*
+    /*
 		Start drawing
 	*/
 
-	var points = [];
-	function calculatePoints(p,i)
-	{
-		var cx = ((i * 100) - ((w*2)/svg_w * 100)) + "%";
-		var cy = (p == 0) ? "75%" : "15%";
-		points.push({"x": cx, "y": cy});
-	}
+    var points = [];
+    function calculatePoints(p,i)
+    {
+        var cx = ((i * 100) - ((w*2)/svg_w * 100)) + "%";
+        var cy = (p == 0) ? "75%" : "15%";
+        points.push({"x": cx, "y": cy});
+    }
 
-	function drawPitchDot(cx, cy, is_particle)
-	{
-		var circle = document.createElementNS(namespace, "circle");
-		circle.setAttribute("fill", (is_particle) ? "#eeeeee" : patternType.color);
-		circle.setAttribute("stroke",  (is_particle) ? "black" : patternType.color);
-		circle.setAttribute("stroke-width", (is_particle) ? "1" : "0");
-		circle.setAttribute("cx", cx);
-		circle.setAttribute("cy", cy);
-		circle.setAttribute("r", w/2);
-		svg.appendChild(circle);
-	}
+    function drawPitchDot(cx, cy, is_particle)
+    {
+        var circle = document.createElementNS(namespace, "circle");
+        circle.setAttribute("fill", (is_particle) ? "#eeeeee" : patternType.color);
+        circle.setAttribute("stroke",  (is_particle) ? "black" : patternType.color);
+        circle.setAttribute("stroke-width", (is_particle) ? "1" : "0");
+        circle.setAttribute("cx", cx);
+        circle.setAttribute("cy", cy);
+        circle.setAttribute("r", w/2);
+        svg.appendChild(circle);
+    }
 
-	function drawLine(x1,y1,x2,y2)
-	{
-		var line = document.createElementNS(namespace, "line");
-		line.setAttribute("stroke", patternType.color);
-		line.setAttribute("stroke-width", "2");
-		line.setAttribute("x1", x1);
-		line.setAttribute("y1", y1);
-		line.setAttribute("x2", x2);
-		line.setAttribute("y2", y2);
-		svg.appendChild(line);
-	}
+    function drawLine(x1,y1,x2,y2)
+    {
+        var line = document.createElementNS(namespace, "line");
+        line.setAttribute("stroke", patternType.color);
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        svg.appendChild(line);
+    }
 
-	/* find pattern from table */
-	var x = pitchNum;
-	var y = kanaLength - 1; //Our array is 0-based, so we need to subtract 1 from out length value.
-	var pattern = pitchPatterns[y][x].slice(); // copy by value, in case we move pitch accent
+    /* find pattern from table */
+    var x = pitchNum;
+    var y = kanaLength - 1; //Our array is 0-based, so we need to subtract 1 from out length value.
+    var pattern = pitchPatterns[y][x].slice(); // copy by value, in case we move pitch accent
 
-	// get the points from pattern
-	var drawnPoints = kanaPlusParticleLength + digraphCount;
-	var k = 0; // the current point in the pattern
-	var c = 0; // the current kana
-	for (var i = 1; i <= drawnPoints; i++)
-	{
-		// Treat digraphs like the previous kana, no change.
-		if ( kataDigraphs.includes(kana[c]) || hiraDigraphs.includes(kana[c]) )
-		{
-			k--;
-		}
-		else if (i == drawnPoints) // @todo: not sure this is the best way to handle words that end in digraphs
-		{
-			k = pattern.length-1;
-		}
-		calculatePoints(pattern[k], i/(drawnPoints));
-		
-		k++;
-		c++;
-	}
-	// draw lines between points
-	for (var i = 0; i < points.length - 1; i++)
-	{
-		drawLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
-	}
-	// draw circles at points
-	for (var i = 0; i < points.length; i++)
-	{
-	  	drawPitchDot(points[i].x, points[i].y, i == points.length - 1);
-	}
+    // get the points from pattern
+    var drawnPoints = kanaPlusParticleLength + digraphCount;
+    var k = 0; // the current point in the pattern
+    var c = 0; // the current kana
+    for (var i = 1; i <= drawnPoints; i++)
+    {
+        // Treat digraphs like the previous kana, no change.
+        if ( kataDigraphs.includes(kana[c]) || hiraDigraphs.includes(kana[c]) )
+        {
+            k--;
+        }
+        else if (i == drawnPoints) // @todo: not sure this is the best way to handle words that end in digraphs
+        {
+            k = pattern.length-1;
+        }
+        calculatePoints(pattern[k], i/(drawnPoints));
 
-	pitchDiagram.appendChild(svg);
-	sessionReadingElem.appendChild(pitchDiagram);
-	sessionReadingElem.appendChild(spanElem);
-	sessionReadingElem.appendChild(pitchInfoElem);
-	return pitchDiagram;
+        k++;
+        c++;
+    }
+    // draw lines between points
+    for (var i = 0; i < points.length - 1; i++)
+    {
+        drawLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+    }
+    // draw circles at points
+    for (var i = 0; i < points.length; i++)
+    {
+        drawPitchDot(points[i].x, points[i].y, i == points.length - 1);
+    }
+
+    pitchDiagram.appendChild(svg);
+
+    sessionReadingElem.appendChild(pitchDiagram);
+    sessionReadingElem.appendChild(spanElem);
+    sessionReadingElem.appendChild(pitchInfoElem);
+    return pitchDiagram;
 }
 
 function writeToPage(pitchNum, pitchNum2)
 {
-	getKanaInfo();
+    getKanaInfo();
 
-	var appendHtml = "";
-	var patternType = getPitchType(pitchNum);
-	if (SHOW_PITCH_DESCRIPTION)
-	{
-		var appendHtml = "";
-		var styles = "display:inline;margin-right: 0.5em;font-size: 11px;font-weight: bold;letter-spacing: 0;border-bottom: none;line-height: 1em;text-shadow: 0 1px 0 #fff;color: #999;";
-		appendHtml = "<h2 style='"+styles+"'>PITCH PATTERN<br/></h2>" + GenerateColoredPatternText(patternType) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum, patternType);
-		if(pitchNum2 != null)
-		{
-			var patternType2 = getPitchType(pitchNum2);
-			appendHtml += "<br/>or<br/>" + GenerateColoredPatternText(patternType2) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum2, patternType2);
-		}
-	}
+    var appendHtml = "";
+    var patternType = getPitchType(pitchNum);
+    if (SHOW_PITCH_DESCRIPTION)
+    {
+        var appendHtml = "";
+        var styles = "display:inline;margin-right: 0.5em;font-size: 11px;font-weight: bold;letter-spacing: 0;border-bottom: none;line-height: 1em;text-shadow: 0 1px 0 #fff;color: #999;";
+        appendHtml = "<h2 style='"+styles+"'>PITCH PATTERN<br/></h2>" + GenerateColoredPatternText(patternType) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum, patternType);
+        if(pitchNum2 != null)
+        {
+            var patternType2 = getPitchType(pitchNum2);
+            appendHtml += "<br/>or<br/>" + GenerateColoredPatternText(patternType2) + "&nbsp;" + GeneratePatternLink(vocab, pitchNum2, patternType2);
+        }
+    }
 
-	if(pitchInfoElem != null)
-	{
-		var existingDiagrams = sessionReadingElem.getElementsByClassName("pitchDiagram");
-		for(var i = 0; i < existingDiagrams.length; i++)
-		{
-			existingDiagrams[i].outerHTML = "";
-			delete existingDiagrams[i];
-		}
-		pitchInfoElem.innerHTML = appendHtml;
-		drawPitchDiagram(pitchNum, patternType);
+    if(pitchInfoElem != null)
+    {
+        pitchInfoElem.innerHTML = appendHtml;
+        pitchInfoElem.setAttribute("vocabpitch", true);
 
-		if(pitchNum2 != null)
-		{
-			drawPitchDiagram(pitchNum2, getPitchType(pitchNum2));
-		}
-	}
+        var pitchDiagram1 = drawPitchDiagram(pitchNum, patternType);
+
+        if(pitchNum2 != null)
+        {
+            var pitchDiagram2 = drawPitchDiagram(pitchNum2, getPitchType(pitchNum2));
+        }
+    }
+}
+//Thought Auto-play of Reading audio was done based on child count by WaniKani, so wanted to make sure it's always in the first element of sessionReadingElem, but doesn't seem to actually be the case. Leaving this here for now in case we have a use though.
+function MoveAudioElementFromTo(fromElement, toElement)
+{
+    var audioElem = fromElement.getElementsByTagName("audio")[0];
+    var buttonElem = fromElement.getElementsByTagName("button")[0];
+
+    if(audioElem === null){ return false; }
+
+    toElement.insertBefore(buttonElem, toElement.firstChild);
+    toElement.insertBefore(audioElem, buttonElem);
+
+    return true;
 }
 
 function GeneratePatternLink(vocabInput, pitchNum, patternType)
 {
-	return "<a href=\"" + webQuery + vocabInput +"\"" + webHeaderReq + "title=\" Pitch Pattern: " + patternType.nameEng + "(" + patternType.name + ")\">[" + pitchNum + "]</a>";
+    return "<a href=\"" + webQuery + vocabInput +"\"" + webHeaderReq + "title=\" Pitch Pattern: " + patternType.nameEng + "(" + patternType.name + ")\">[" + pitchNum + "]</a>";
 }
 
 function GenerateColoredPatternText(patternType)
 {
-	return "<font color=\"" + patternType.color + "\">" + patternType.name + "</font>";
+    return "<font color=\"" + patternType.color + "\">" + patternType.name + "</font>";
 }
