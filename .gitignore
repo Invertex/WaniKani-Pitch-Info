@@ -3,3 +3,7 @@
 ################################################################################
 
 *.config
+/WaniKani-Pitch-Info.sln
+/.vs/VSWorkspaceState.json
+/index.html
+/.vs
