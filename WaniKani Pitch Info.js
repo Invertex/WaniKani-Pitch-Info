@@ -97,15 +97,16 @@ var patternObj = {
 
 $(document).ready(function()
 {
-    parsePage();
-
-    var observer = new MutationObserver(function(mutations)
-                                        {
-        mutations.forEach(function(mutation)
-                          {
-            parsePage(false);
-        });
-    });
+	parsePage();
+//Lessons watching
+	var observer = new MutationObserver(
+		function (mutations)
+		{
+			mutations.forEach(function(mutation)
+            {
+				parsePage(true);
+			});
+		});
 
     // descriptionElem = document.getElementsByClassName('pure-g-r')[0];
     // if(descriptionElem != null){
@@ -115,26 +116,28 @@ $(document).ready(function()
     // {
     readingElem = document.getElementById('supplement-voc-reading');
     if(readingElem != null){
-        observer.observe(readingElem, {attributes: true, attributeFilter: ['style', 'class'], subtree:true});
+        setTimeout(function() {
+        observer.observe(readingElem, {attributes: true, attributeFilter: ['style'], subtree:false});}, 200);
     }
     // }
 
+ //Reviews Watching
     var forceRefreshObserver = new MutationObserver(function(mutations)
-                                                    {
+    {
         mutations.forEach(function(mutation)
-                          {
-            parsePage(true);
+        {
+                parsePage(true);
         });
     });
     var infoDropdown = document.getElementById("all-info");
     if(infoDropdown != null)
     {
-        forceRefreshObserver.observe(infoDropdown, {attributes: true, attributeFilter: ['style'], subtree:false});
+        forceRefreshObserver.observe(infoDropdown, {attributes: true, attributeFilter: ['style'], subtree:false, childList:false});
     }
     var information = document.getElementById("information");
     if(information != null)
     {
-        forceRefreshObserver.observe(information, {attributes: true, attributeFilter: ['style', 'class'], subtree:false});
+        forceRefreshObserver.observe(information, {attributes: true, attributeFilter: ['class', 'style'], subtree:true});
     }
     var inputButton = document.getElementById("user-response");
     if(inputButton != null)
@@ -143,13 +146,13 @@ $(document).ready(function()
     }
 });
 
-function buggedPitchDiagramCheck()
+function cleanupPitchDiagrams(deleteAll)
 {
     var existingPitchDiagrams = document.getElementsByClassName("pitchDiagram");
     for(var i = 0; i < existingPitchDiagrams.length; i++)
     {
         var svg = existingPitchDiagrams[i].getElementsByTagName("svg")[0];
-        if(svg == null){
+        if(svg == null || deleteAll){
             existingPitchDiagrams[i].outerHTML = "";
             delete existingPitchDiagrams[i];
         }
@@ -158,10 +161,9 @@ function buggedPitchDiagramCheck()
 
 function parsePage(forceRefresh)
 {
-    buggedPitchDiagramCheck();
     var tmpVocab = "";
     var tmpSessionElem;
-
+    cleanupPitchDiagrams(false);
     var sessionChar = document.getElementById("character"); //Check for seassion character
     if(sessionChar != null && ($(sessionChar).hasClass('vocabulary') || $('#main-info').hasClass('vocabulary')))
     {
@@ -170,6 +172,7 @@ function parsePage(forceRefresh)
         {
             tmpVocab = sessionVocElem.innerHTML;
             tmpSessionElem = document.getElementById("item-info-reading");
+            if(tmpSessionElem == null || !tmpSessionElem.innerHTML.includes("Reading")) { return; }
         }
         else //We must be in Lesson session if there is no "span" element, characters are in first element we got.
         {
@@ -209,6 +212,7 @@ function parsePage(forceRefresh)
 
     if(tmpVocab != null && tmpVocab != "" && !tmpVocab.includes("nbsp") && tmpSessionElem != null && newReading != null && newReading != "" && (tmpVocab != vocab || newReading != reading || forceRefresh || pitchInfoCheck == null))
     {
+        if(reading == newReading && sessionReadingElem == tmpSessionElem) { return; }
         reading = newReading;
         vocab = tmpVocab;
 
@@ -219,12 +223,12 @@ function parsePage(forceRefresh)
             pitchInfoElems[j].outerHTML = "";
             delete pitchInfoElems[j];
         }
-        var existingDiagrams = document.getElementsByClassName("pitchDiagram");
+      /*  var existingDiagrams = document.getElementsByClassName("pitchDiagram");
         for(var i = 0; i < existingDiagrams.length; i++)
         {
             existingDiagrams[i].outerHTML = "";
             delete existingDiagrams[i];
-        }
+        }*/
 
         pitchInfoElem = document.createElement("P");
         pitchInfoElem.className = "pitchInfo";
@@ -342,7 +346,7 @@ function getKanaInfo()
 {
     // get information about the kana
 
-    if (reading == null){ return; }
+    if (reading == null) { return; }
 
     // Get sibling that contains vocabulary kana
     kanaElem = spanElem;
@@ -509,6 +513,7 @@ function drawPitchDiagram(pitchNum, patternType)
 
 function writeToPage(pitchNum, pitchNum2)
 {
+    cleanupPitchDiagrams(true);
     getKanaInfo();
 
     var appendHtml = "";
