@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.40
+// @version      0.41
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -577,18 +577,12 @@ function MoveAudioElementFromTo(fromElement, toElement) {
 
 function GeneratePatternLink(vocabInput, pitchNum, patternType) {
   return (
-    '<a href="' +
-    webQuery +
-    vocabInput +
-    '"' +
-    webHeaderReq +
-    'title=" Pitch Pattern: ' +
-    patternType.nameEng +
-    '(' +
-    patternType.name +
-    ')">[' +
-    pitchNum +
-    ']</a>'
+    '<a href="' + webQuery + vocabInput + '" '
+    + webHeaderReq
+    + ' title=" Pitch Pattern: ' + patternType.nameEng
+    + '('
+    + patternType.name
+    + ')">[' + pitchNum + ']</a>'
   );
 }
 
