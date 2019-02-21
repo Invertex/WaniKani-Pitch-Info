@@ -217,7 +217,7 @@ function parsePage(forceRefresh) {
     //Check for Vocab page element
     var vocabIcon = document.getElementsByClassName('vocabulary-icon')[0];
     if (vocabIcon != null) {
-      tmpVocab = $(vocabIcon.getElementsByTagName('span')[0]).html();
+      tmpVocab = vocabIcon.innerHTML;
       tmpSessionElem = document.getElementsByClassName('vocabulary-reading')[0];
     }
   }
