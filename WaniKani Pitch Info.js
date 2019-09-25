@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.44
+// @version      0.45
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -190,9 +190,14 @@ function cleanupPitchDiagrams(deleteAll) {
   }
 }
 
+var pronounciationVariant;
+var vocabPage = window.location.href.includes("/vocabulary/");
+
 function parsePage(forceRefresh) {
+
   var tmpVocab = '';
   var tmpSessionElem;
+  vocabPage = false;
   cleanupPitchDiagrams(false);
   var sessionChar = document.getElementById('character'); //Check for seassion character
   if (
@@ -237,6 +242,8 @@ function parsePage(forceRefresh) {
       //    console.log(reading.charCodeAt(i)); //To be used to get all needed char codes for potentially faster character comparison
       //}
     }
+
+      pronounciationVariant = tmpSessionElem.getElementsByClassName('pronunciation-variant')[0];
   }
 
   var pitchInfoCheck = document.getElementsByClassName('pitchInfo')[0];
@@ -290,7 +297,7 @@ function parsePage(forceRefresh) {
 function findChildElemWithAttr(parentElem, elemType, attrType) {
   var childElems = parentElem.getElementsByTagName(elemType);
 
-  for (i = 0; i < childElems.length; i++) {
+  for (var i = 0; i < childElems.length; i++) {
     if (childElems[i].hasAttribute(attrType)) {
       return childElems[i];
     }
@@ -312,7 +319,7 @@ function parseResponse(responseObj) {
   var vocabResults = respDoc.getElementsByClassName('midashigo');
 
   if (vocabResults != null) {
-    for (i = 0; i < vocabResults.length; i++) {
+    for (var i = 0; i < vocabResults.length; i++) {
       if ($(vocabResults[i]).attr('title') == vocab) {
         var boldElems = vocabResults[i].getElementsByTagName('B');
         if (boldElems != null && boldElems.length > 0) {
@@ -325,7 +332,7 @@ function parseResponse(responseObj) {
           if (spans != null) {
             var numMatch;
             var numMatch2;
-            for (s = 0; s < spans.length; s++) {
+            for (var s = 0; s < spans.length; s++) {
               var spanText = spans[s].textContent;
               if (spanText.includes('［')) {
                 var parseNum = parseInt(spanText.match(/\d+/g));
@@ -434,8 +441,8 @@ function drawPitchDiagram(pitchNum, patternType) {
   pitchDiagram.style.position = 'relative';
   pitchDiagram.style.left = '2';
   pitchDiagram.style.top = '0';
-  pitchDiagram.style.bottom = '2';
-  pitchDiagram.style.marginBottom = '0';
+  pitchDiagram.style.bottom = '0';
+  pitchDiagram.style.marginBottom = vocabPage ? '-0.5em' : '-1em';
   pitchDiagram.style.width = svg_w + 'px';
   pitchDiagram.style.height = svg_h + 'px';
   // add space to parent element
@@ -492,7 +499,8 @@ function drawPitchDiagram(pitchNum, patternType) {
   var drawnPoints = kanaPlusParticleLength + digraphCount;
   var k = 0; // the current point in the pattern
   var c = 0; // the current kana
-  for (var i = 1; i <= drawnPoints; i++) {
+  for (var i = 1; i <= drawnPoints; i++)
+  {
     // Treat digraphs like the previous kana, no change.
     if (kataDigraphs.includes(kana[c]) || hiraDigraphs.includes(kana[c])) {
       k--;
@@ -506,18 +514,26 @@ function drawPitchDiagram(pitchNum, patternType) {
     c++;
   }
   // draw lines between points
-  for (var i = 0; i < points.length - 1; i++) {
-    drawLine(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+  for (var l = 0; l < points.length - l; l++) {
+    drawLine(points[l].x, points[l].y, points[l + 1].x, points[l + 1].y);
   }
   // draw circles at points
-  for (var i = 0; i < points.length; i++) {
-    drawPitchDot(points[i].x, points[i].y, i == points.length - 1);
+  for (var p = 0; p < points.length; p++) {
+    drawPitchDot(points[p].x, points[p].y, p == points.length - 1);
   }
 
   pitchDiagram.appendChild(svg);
 
-  sessionReadingElem.appendChild(pitchDiagram);
-  sessionReadingElem.appendChild(spanElem);
+    if(pronounciationVariant != null)
+    {
+        pronounciationVariant.parentElement.insertBefore(pitchDiagram, pronounciationVariant);
+
+    }
+    else
+    {
+        sessionReadingElem.appendChild(pitchDiagram);
+        sessionReadingElem.appendChild(spanElem);
+    }
   sessionReadingElem.appendChild(pitchInfoElem);
   return pitchDiagram;
 }
@@ -529,7 +545,6 @@ function writeToPage(pitchNum, pitchNum2) {
   var appendHtml = '';
   var patternType = getPitchType(pitchNum);
   if (SHOW_PITCH_DESCRIPTION) {
-    var appendHtml = '';
     var styles =
       'display:inline;margin-right: 0.5em;font-size: 11px;font-weight: bold;letter-spacing: 0;border-bottom: none;line-height: 1em;text-shadow: 0 1px 0 #fff;color: #999;';
     appendHtml =
