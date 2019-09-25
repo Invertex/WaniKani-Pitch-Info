@@ -4,7 +4,7 @@
 // @include     http://www.wanikani.com/*
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.45
+// @version      0.46
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
@@ -191,13 +191,12 @@ function cleanupPitchDiagrams(deleteAll) {
 }
 
 var pronounciationVariant;
-var vocabPage = window.location.href.includes("/vocabulary/");
+
 
 function parsePage(forceRefresh) {
 
   var tmpVocab = '';
   var tmpSessionElem;
-  vocabPage = false;
   cleanupPitchDiagrams(false);
   var sessionChar = document.getElementById('character'); //Check for seassion character
   if (
@@ -442,7 +441,7 @@ function drawPitchDiagram(pitchNum, patternType) {
   pitchDiagram.style.left = '2';
   pitchDiagram.style.top = '0';
   pitchDiagram.style.bottom = '0';
-  pitchDiagram.style.marginBottom = vocabPage ? '-0.5em' : '-1em';
+  pitchDiagram.style.marginBottom = '-0.5em';
   pitchDiagram.style.width = svg_w + 'px';
   pitchDiagram.style.height = svg_h + 'px';
   // add space to parent element
