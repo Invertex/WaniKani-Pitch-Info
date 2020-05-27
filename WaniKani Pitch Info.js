@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name         WaniKani Pitch Info
-// @include     https://www.wanikani.com/*
-// @include     http://www.wanikani.com/*
+// @name         WaniKani Pitch Info
+// @include     http*://*.wanikani.com/lesson/*
+// @include     http*//*.wanikani.com/review/*
+// @include     http*://*.wanikani.com/vocabulary/*
+
 // @run-at document-end
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.46
+// @version      0.47
 // @description  Grabs Pitch value for a given Vocab from weblio.jp and displays it on a WaniKani vocab or session page.
 // @author       Invertex
 // @supportURL http://invertex.xyz
