@@ -516,7 +516,7 @@ function drawPitchDiagram(pitchNum, patternType) {
     c++;
   }
   // draw lines between points
-  for (var l = 0; l < points.length - l; l++) {
+  for (var l = 0; l < points.length - 1; l++) {
     drawLine(points[l].x, points[l].y, points[l + 1].x, points[l + 1].y);
   }
   // draw circles at points
