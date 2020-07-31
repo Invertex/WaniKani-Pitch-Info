@@ -464,14 +464,28 @@ function drawPitchDiagram(pitchNum, patternType) {
 
   if (pronounciationVariant != null) {
     pronounciationVariant.parentElement.insertBefore(pitchDiagram, pronounciationVariant);
-    pronounciationVariant.innerHTML = pronounciationVariant.innerHTML.replace(/.[ぁぇぃぉぅゃゅょァェィォゥャョュ]/g, (digraph) =>
-      '<span style="display:inline-block;margin:0 ' + -fontSize/2 + 'px;transform:scaleX(0.5)">' + digraph + '</span>');
+    // Halve the width of all the digraphs (きゃ, しゅ…) in the pronunciation key.
+    var letterSpacing = -0.225 * fontSize;
+    var scaleX = 0.7;
+    var ds = digraphStyle(fontSize, letterSpacing, scaleX);
+    pronounciationVariant.innerHTML = pronounciationVariant.innerHTML.replace(
+      /.[ぁぇぃぉぅゃゅょァェィォゥャョュ]/g,
+      function (digraph) { return '<span style="' + ds + '">' + digraph + '</span>'; }
+    );
   } else {
     sessionReadingElem.appendChild(pitchDiagram);
     sessionReadingElem.appendChild(spanElem);
   }
   sessionReadingElem.appendChild(pitchInfoElem);
   return pitchDiagram;
+}
+
+function digraphStyle(fontSize, letterSpacing, scaleX) {
+    var s = 'display:inline-block;';
+    s += 'letter-spacing:' + letterSpacing + 'px;';
+    s += 'margin:0 ' + (-0.5 * fontSize - letterSpacing) + 'px;';
+    s += 'transform:scaleX(' + scaleX + ') translateX(' + letterSpacing / 2 + 'px);';
+    return s;
 }
 
 function writeToPage(pitchNum, pitchNum2) {
