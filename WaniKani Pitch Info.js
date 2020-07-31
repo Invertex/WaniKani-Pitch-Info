@@ -423,10 +423,7 @@ function getPitchType(pitchNum) {
 
 //Pitch pattern drawing by https://github.com/blaketrahan
 function drawPitchDiagram(pitchNum, patternType) {
-  /*
-		Prepare elements for drawing
-	*/
-
+  // Prepare elements for drawing
   if (pitchNum < 0) {
     return;
   }
@@ -434,7 +431,7 @@ function drawPitchDiagram(pitchNum, patternType) {
   // use the font size to calculate height and width
   var fontSize = window.getComputedStyle(kanaElem, null).getPropertyValue('font-size');
   fontSize = parseFloat(fontSize);
-  var svg_w = fontSize * (kanaPlusParticleLength + digraphCount);
+  var svg_w = fontSize * (kanaPlusParticleLength);
   var svg_h = fontSize + 10;
 
   // absolute positioned container
@@ -449,7 +446,6 @@ function drawPitchDiagram(pitchNum, patternType) {
   pitchDiagram.style.height = svg_h + 'px';
   // add space to parent element
   kanaElem.style.position = 'relative';
-  //kanaElem.style.paddingTop = fontSize + "px"; //using relative now, this causes issues
 
   // the svg which will be drawn to
   var namespace = 'http://www.w3.org/2000/svg';
@@ -459,16 +455,8 @@ function drawPitchDiagram(pitchNum, patternType) {
 
   var w = 5; // dot size
 
-  /*
-		Start drawing
-	*/
-
+  // Start drawing
   var points = [];
-  function calculatePoints(p, i) {
-    var cx = i * 100 - w * 2 / svg_w * 100 + '%';
-    var cy = p == 0 ? '75%' : '15%';
-    points.push({ x: cx, y: cy });
-  }
 
   function drawPitchDot(cx, cy, is_particle) {
     var circle = document.createElementNS(namespace, 'circle');
@@ -498,22 +486,9 @@ function drawPitchDiagram(pitchNum, patternType) {
   var pattern = pitchPatterns[y][x].slice(); // copy by value, in case we move pitch accent
 
   // get the points from pattern
-  var drawnPoints = kanaPlusParticleLength + digraphCount;
-  var k = 0; // the current point in the pattern
-  var c = 0; // the current kana
-  for (var i = 1; i <= drawnPoints; i++)
-  {
-    // Treat digraphs like the previous kana, no change.
-    if (kataDigraphs.includes(kana[c]) || hiraDigraphs.includes(kana[c])) {
-      k--;
-    } else if (i == drawnPoints) {
-      // @todo: not sure this is the best way to handle words that end in digraphs
-      k = pattern.length - 1;
-    }
-    calculatePoints(pattern[k], i / drawnPoints);
-
-    k++;
-    c++;
+  var drawnPoints = kanaPlusParticleLength;
+  for (var i = 0; i < kanaPlusParticleLength; i++) {
+    points.push({ x: fontSize * (i + 0.5), y: pattern[i] ? '15%' : '75%' });
   }
   // draw lines between points
   for (var l = 0; l < points.length - 1; l++) {
@@ -526,16 +501,14 @@ function drawPitchDiagram(pitchNum, patternType) {
 
   pitchDiagram.appendChild(svg);
 
-    if(pronounciationVariant != null)
-    {
-        pronounciationVariant.parentElement.insertBefore(pitchDiagram, pronounciationVariant);
-
-    }
-    else
-    {
-        sessionReadingElem.appendChild(pitchDiagram);
-        sessionReadingElem.appendChild(spanElem);
-    }
+  if (pronounciationVariant != null) {
+    pronounciationVariant.parentElement.insertBefore(pitchDiagram, pronounciationVariant);
+    pronounciationVariant.innerHTML = pronounciationVariant.innerHTML.replace(/.[ぁぇぃぉぅゃゅょァェィォゥャョュ]/g, (digraph) =>
+      '<span style="display:inline-block;margin:0 ' + -fontSize/2 + 'px;transform:scaleX(0.5)">' + digraph + '</span>');
+  } else {
+    sessionReadingElem.appendChild(pitchDiagram);
+    sessionReadingElem.appendChild(spanElem);
+  }
   sessionReadingElem.appendChild(pitchInfoElem);
   return pitchDiagram;
 }
