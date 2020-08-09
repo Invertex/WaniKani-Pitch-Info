@@ -468,10 +468,12 @@ function drawPitchDiagram(pitchNum, patternType) {
     var letterSpacing = -0.225 * fontSize;
     var scaleX = 0.7;
     var ds = digraphStyle(fontSize, letterSpacing, scaleX);
-    pronounciationVariant.innerHTML = pronounciationVariant.innerHTML.replace(
-      /.[ぁぇぃぉぅゃゅょァェィォゥャョュ]/g,
-      function (digraph) { return '<span style="' + ds + '">' + digraph + '</span>'; }
-    );
+    if (!pronounciationVariant.innerHTML.match(/<span/)) { // Only apply once
+      pronounciationVariant.innerHTML = pronounciationVariant.innerHTML.replace(
+        /.[ぁぇぃぉぅゃゅょァェィォゥャョュ]/g,
+        function (digraph) { return '<span style="' + ds + '">' + digraph + '</span>'; }
+      );
+    }
   } else {
     sessionReadingElem.appendChild(pitchDiagram);
     sessionReadingElem.appendChild(spanElem);
