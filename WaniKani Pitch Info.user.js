@@ -96,7 +96,7 @@
       }
       let diagrams = pitchInfo.map(p => drawPitchDiagram(p, reading));
       pReading.before(...diagrams);
-      [...diagrams, dInfo].forEach(d => injectorState.injector.registerAppendedElement(d));
+      [...diagrams, dInfo].forEach(d => { if (d) injectorState.injector.registerAppendedElement(d); });
       makeMonospaced(pReading.childNodes[0]);
     });
   }
@@ -112,6 +112,7 @@
   }
 
   function appendPitchPatternInfo(readingElement, infoElements) {
+    if (!SHOW_PITCH_DESCRIPTION) return null;
     let dInfo = document.createElement('div');
     let hInfo = document.createElement('h3');
     let pInfo = document.createElement('p');
