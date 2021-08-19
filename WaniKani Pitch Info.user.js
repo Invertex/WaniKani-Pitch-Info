@@ -7,7 +7,7 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.51
+// @version      0.52
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
