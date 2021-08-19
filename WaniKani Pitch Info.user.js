@@ -3,6 +3,8 @@
 // @include      http*://*.wanikani.com/lesson/*
 // @include      http*://*.wanikani.com/review/*
 // @include      http*://*.wanikani.com/vocabulary/*
+// @updateURL    https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
+// @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
 // @version      0.51
