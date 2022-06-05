@@ -8,12 +8,12 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.57
+// @version      0.58
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
 // @run-at       document-end
-// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1024045
+// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1057854
 // @resource     accents https://raw.githubusercontent.com/mifunetoshiro/kanjium/94473cd69598abf54cc338a0b89f190a6c02a01c/data/source_files/raw/accents.txt
 // @grant        GM_getResourceText
 // ==/UserScript==
@@ -76,7 +76,7 @@
     感: 'Interjection'
   };
 
-  wkItemInfo.forType('vocabulary').under('reading').notify(injectPitchInfo);
+  wkItemInfo.forType('vocabulary').under('reading').notifyWhenVisible(injectPitchInfo);
   addCss();
   loadWhileIdle();
 
