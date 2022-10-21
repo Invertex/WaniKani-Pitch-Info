@@ -17,7 +17,7 @@
 // @author       Invertex
 // @supportURL   http://invertex.xyz
 // @run-at       document-end
-// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1103761
+// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1107823
 // @resource     accents https://raw.githubusercontent.com/mifunetoshiro/kanjium/94473cd69598abf54cc338a0b89f190a6c02a01c/data/source_files/raw/accents.txt
 // @grant        GM_getResourceText
 // ==/UserScript==
