@@ -1,23 +1,17 @@
 // ==UserScript==
 // @name         WaniKani Pitch Info
-// @match        https://www.wanikani.com/lesson/*
-// @match        https://www.wanikani.com/review/*
-// @match        https://www.wanikani.com/vocabulary/*
-// @match        https://www.wanikani.com/extra_study/session*
-// @match        https://preview.wanikani.com/lesson/*
-// @match        https://preview.wanikani.com/review/*
-// @match        https://preview.wanikani.com/vocabulary/*
-// @match        https://preview.wanikani.com/extra_study/session*
+// @match        https://www.wanikani.com/*
+// @match        https://preview.wanikani.com/*
 // @updateURL    https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.61
+// @version      0.62
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
 // @run-at       document-end
-// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1107823
+// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1111117
 // @resource     accents https://raw.githubusercontent.com/mifunetoshiro/kanjium/94473cd69598abf54cc338a0b89f190a6c02a01c/data/source_files/raw/accents.txt
 // @grant        GM_getResourceText
 // ==/UserScript==
