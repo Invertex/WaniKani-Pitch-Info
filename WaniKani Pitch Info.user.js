@@ -6,12 +6,12 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.62
+// @version      0.63
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
 // @run-at       document-end
-// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1111117
+// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1166918
 // @resource     accents https://raw.githubusercontent.com/mifunetoshiro/kanjium/94473cd69598abf54cc338a0b89f190a6c02a01c/data/source_files/raw/accents.txt
 // @grant        GM_getResourceText
 // ==/UserScript==
@@ -79,7 +79,7 @@
   loadWhileIdle();
 
   function injectPitchInfo(injectorState) {
-    document.querySelectorAll('.pronunciation-variant, .subject-readings-with-audio__reading').forEach(pReading => {
+    document.querySelectorAll('.pronunciation-variant, .subject-readings-with-audio__reading, .reading-with-audio__reading').forEach(pReading => {
       let reading = pReading.textContent;
       let pitchInfo = getPitchInfo(injectorState.characters, reading);
       if (!pitchInfo) return;
@@ -283,7 +283,7 @@
       .pitch-pattern                                                                          { display: flex; margin-bottom: 0; color: #999; text-transform: uppercase; }
       .pitch-pattern h3, #item-info .pitch-pattern h3                                         { margin: 0 1em 0 0; padding: 0; font-size: 11px; font-weight: bold; letter-spacing: 0; border-bottom: none; line-height: 1.6em; }
       .pitch-pattern p                                                                        { font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 11px; flex: 1 0 auto; margin: 0; }
-      .pitch-diagram.pitch-diagram.pitch-diagram.pitch-diagram                                { margin: 0; display: block; }
+      .pitch-diagram.pitch-diagram.pitch-diagram.pitch-diagram                                { margin: 0; display: block; font-size: 18px; }
       .pitch-pattern + .subject-readings-with-audio__audio-items                              { margin-top: 0.6em; }
       ${Object.values(patternObj).map(({color, cssClass}) => `.${cssClass} { color: ${color}; }`).join('')}`;
     document.head.appendChild(style);
