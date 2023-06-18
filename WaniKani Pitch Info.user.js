@@ -6,12 +6,12 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.65
+// @version      0.66
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
 // @run-at       document-end
-// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1181453
+// @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1207013
 // @resource     accents https://raw.githubusercontent.com/mifunetoshiro/kanjium/94473cd69598abf54cc338a0b89f190a6c02a01c/data/source_files/raw/accents.txt
 // @grant        GM_getResourceText
 // ==/UserScript==
@@ -75,13 +75,14 @@
   };
 
   wkItemInfo.forType('vocabulary').under('reading').notifyWhenVisible(injectPitchInfo);
+  wkItemInfo.forType('kanaVocabulary').under('meaning').notifyWhenVisible(injectPitchInfo);
   addCss();
   loadWhileIdle();
 
   function injectPitchInfo(injectorState) {
     document.querySelectorAll('.pronunciation-variant, .subject-readings-with-audio__reading, .reading-with-audio__reading').forEach(pReading => {
       let reading = pReading.textContent;
-      let pitchInfo = getPitchInfo(injectorState.characters, reading);
+      let pitchInfo = getPitchInfo(injectorState.characters, injectorState.type === 'kanaVocabulary' ? '' : reading);
       if (!pitchInfo) return;
       let dInfo = null;
       let wordTypes = [...new Set([...pitchInfo.matchAll(/[\(;]([^\);]*)/g)].flatMap(r => r[1]))];
@@ -148,7 +149,7 @@
   }
 
   function pitchLookupTextfile(vocab, reading, accents) {
-    let key = vocab + '\t' + reading + '\t';
+    let key = `\n${vocab}\t${reading}\t`;
     let start = accents.indexOf(key);
     if (start < 0) return null;
     start += key.length;
