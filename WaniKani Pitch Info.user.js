@@ -2,6 +2,8 @@
 // @name         WaniKani Pitch Info
 // @match        https://www.wanikani.com/*
 // @match        https://preview.wanikani.com/*
+// @updateURL    https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
+// @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
 // @version      0.73
@@ -12,8 +14,6 @@
 // @require      https://greasyfork.org/scripts/430565-wanikani-item-info-injector/code/WaniKani%20Item%20Info%20Injector.user.js?version=1380162
 // @resource     accents https://raw.githubusercontent.com/mifunetoshiro/kanjium/94473cd69598abf54cc338a0b89f190a6c02a01c/data/source_files/raw/accents.txt
 // @grant        GM_getResourceText
-// @downloadURL https://update.greasyfork.org/scripts/31070/WaniKani%20Pitch%20Info.user.js
-// @updateURL https://update.greasyfork.org/scripts/31070/WaniKani%20Pitch%20Info.meta.js
 // ==/UserScript==
 
 (function() {
