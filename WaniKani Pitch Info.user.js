@@ -6,7 +6,7 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.72
+// @version      0.73
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
@@ -78,26 +78,76 @@
   wkItemInfo.forType('kanaVocabulary').under('meaning').notifyWhenVisible(injectPitchInfo);
   addCss();
   loadWhileIdle();
+  setupInjectPitchIntoReviewQuestionArea();
+
+  function setupInjectPitchIntoReviewQuestionArea() {
+    // Injects pitch accent and reading into question area.
+    // Pitch is only displayed when the user enters a correct reading
+    window.wkPitchInfoScriptObjectsToRemove = [];
+    window.addEventListener('didAnswerQuestion', (ev) => {
+      // didAnswerQuestion will be triggered whenever the user answers a question
+      if (ev.detail.questionType == 'reading' && ev.detail.results.action == 'pass') {
+        let divQuestion = document.querySelector("#turbo-body > div.quiz > div > div.character-header.character-header--vocabulary > div > div.character-header__characters");
+        wkItemInfo.currentState.reading.forEach(reading => {
+          // Create a white box in the question area
+          var divOuter = document.createElement("div");
+          divOuter.setAttribute('class', 'additional-content__content additional-content__content--open subject-section subject-section--reading subject-section--collapsible subject-section__subsection subject-readings-with-audio subject-readings-with-audio__item');
+          divOuter.style.boxShadow = "0px 0px 0px #e3e3e3";
+          divOuter.style.border = "0px solid #d4d4d4;";
+
+          // Create a div to store the reading
+          var divReading = document.createElement("div");
+          divReading.setAttribute('class', 'reading-with-audio__reading question-pitch-display');
+          divReading.setAttribute('lang', 'ja');
+          divReading.innerHTML = `${reading}`;
+          divReading.style.color = "#333";
+          divOuter.appendChild(divReading);
+
+          divQuestion.insertAdjacentElement('afterend', divOuter);
+          window.wkPitchInfoScriptObjectsToRemove.push(divOuter);
+
+          injectPitchInfoToSingleElement(wkItemInfo.currentState, divReading);
+        });
+      }
+    })
+
+    // Cleans up the objects that we inject into the question area
+    window.addEventListener('willShowNextQuestion', (ev) => {
+      // willShowNextQuestion will be triggered whenever a new question is to be loaded
+      // Register a callback here to
+      window.wkPitchInfoScriptObjectsToRemove.forEach(pObject => {
+        while (pObject.firstChild) { pObject.removeChild(pObject.firstChild); }
+        pObject.remove();
+      });
+      window.wkPitchInfoScriptObjectsToRemove = [];
+    })
+  }
+
+  function injectPitchInfoToSingleElement(injectorState, pReading) {
+    let reading = pReading.textContent;
+    let pitchInfo = getPitchInfo(injectorState.characters, injectorState.type === 'kanaVocabulary' ? '' : reading);
+    if (!pitchInfo) return;
+    let dInfo = null;
+    let wordTypes = [...new Set([...pitchInfo.matchAll(/[\(;]([^\);]*)/g)].flatMap(r => r[1]))];
+    if (wordTypes.length > 0) {
+      let wordTypeToPitch = wordTypes.map(w => [w, [...pitchInfo.matchAll(new RegExp(w + '[^\\)]*\\)([\\d,]+)', 'g'))].flatMap(r => r[1]).join('').split(',').filter(p => p).map(p => parseInt(p))]);
+      dInfo = appendPitchPatternInfo(pReading, pitchByWordTypeToInfoElements(wordTypeToPitch, injectorState.characters, reading));
+      pitchInfo = [...new Set([...pitchInfo.matchAll(/\d/g)].map(r => r[0]))].map(p => parseInt(p));
+    } else {
+      pitchInfo = pitchInfo.split(',').map(p => parseInt(p));
+      dInfo = appendPitchPatternInfo(pReading, pitchToInfoElements(pitchInfo, injectorState.characters, reading));
+    }
+    let diagrams = pitchInfo.map(p => drawPitchDiagram(p, reading));
+    pReading.before(...diagrams);
+    if ("injector" in injectorState) {
+      [...diagrams, dInfo].forEach(d => { if (d) injectorState.injector.registerAppendedElement(d); });
+    }
+    makeMonospaced(pReading.childNodes[0]);
+  }
 
   function injectPitchInfo(injectorState) {
-    document.querySelectorAll('.pronunciation-variant, .subject-readings-with-audio__reading, .reading-with-audio__reading').forEach(pReading => {
-      let reading = pReading.textContent;
-      let pitchInfo = getPitchInfo(injectorState.characters, injectorState.type === 'kanaVocabulary' ? '' : reading);
-      if (!pitchInfo) return;
-      let dInfo = null;
-      let wordTypes = [...new Set([...pitchInfo.matchAll(/[\(;]([^\);]*)/g)].flatMap(r => r[1]))];
-      if (wordTypes.length > 0) {
-        let wordTypeToPitch = wordTypes.map(w => [w, [...pitchInfo.matchAll(new RegExp(w + '[^\\)]*\\)([\\d,]+)', 'g'))].flatMap(r => r[1]).join('').split(',').filter(p => p).map(p => parseInt(p))]);
-        dInfo = appendPitchPatternInfo(pReading, pitchByWordTypeToInfoElements(wordTypeToPitch, injectorState.characters, reading));
-        pitchInfo = [...new Set([...pitchInfo.matchAll(/\d/g)].map(r => r[0]))].map(p => parseInt(p));
-      } else {
-        pitchInfo = pitchInfo.split(',').map(p => parseInt(p));
-        dInfo = appendPitchPatternInfo(pReading, pitchToInfoElements(pitchInfo, injectorState.characters, reading));
-      }
-      let diagrams = pitchInfo.map(p => drawPitchDiagram(p, reading));
-      pReading.before(...diagrams);
-      [...diagrams, dInfo].forEach(d => { if (d) injectorState.injector.registerAppendedElement(d); });
-      makeMonospaced(pReading.childNodes[0]);
+    document.querySelectorAll('.pronunciation-variant:not(.question-pitch-display), .subject-readings-with-audio__reading:not(.question-pitch-display), .reading-with-audio__reading:not(.question-pitch-display)').forEach(pReading => {
+      injectPitchInfoToSingleElement(injectorState, pReading);
     });
   }
 
