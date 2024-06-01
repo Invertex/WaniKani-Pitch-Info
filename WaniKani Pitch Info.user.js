@@ -6,7 +6,7 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.73
+// @version      0.74
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
@@ -336,6 +336,8 @@
       .pitch-pattern p                                                                        { font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 11px; flex: 1 0 auto; margin: 0; }
       .pitch-diagram.pitch-diagram.pitch-diagram.pitch-diagram                                { margin: 0; display: block; font-size: 18px; }
       .pitch-pattern + .subject-readings-with-audio__audio-items                              { margin-top: 0.6em; }
+      .character-header .question-pitch-display > span                                        { color: rgb(255 255 255); }
+      .character-header .additional-content__content:has(> .pitch-diagram) { background-color: rgba(0.2, 0.2, 0.2, 0.2); border-style: none; padding: 6px 8px; box-shadow: rgb(227, 227, 227) 0px 2px 4px !important; text-shadow: 0 2px black; }
       ${Object.values(patternObj).map(({color, cssClass}) => `.${cssClass} { color: ${color}; }`).join('')}`;
     document.head.appendChild(style);
   }
