@@ -6,7 +6,7 @@
 // @downloadURL  https://greasyfork.org/scripts/31070-wanikani-pitch-info/code/WaniKani%20Pitch%20Info.user.js
 
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.74
+// @version      0.75
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
@@ -19,6 +19,7 @@
 (function() {
   'use strict';
   /* global wkItemInfo */
+  /* global wkof */
   /* eslint no-multi-spaces: off */
 
   const SHOW_PITCH_DESCRIPTION = true;
@@ -74,11 +75,54 @@
     感: 'Interjection'
   };
 
-  wkItemInfo.forType('vocabulary').under('reading').notifyWhenVisible(injectPitchInfo);
-  wkItemInfo.forType('kanaVocabulary').under('meaning').notifyWhenVisible(injectPitchInfo);
-  addCss();
-  loadWhileIdle();
-  setupInjectPitchIntoReviewQuestionArea();
+  // Check for WaniKani Open Framework
+  if (!wkof) {
+    alert('WaniKani Pitch Info script requires Wanikani Open Framework.\nYou will now be forwarded to installation instructions.');
+    window.location.href = 'https://community.wanikani.com/t/instructions-installing-wanikani-open-framework/28549';
+    return;
+  }
+
+  wkof.include('Menu,Settings');
+  wkof.ready('Menu,Settings')
+  .then(install_menu)
+  .then(startup);
+
+  function install_menu() {
+      wkof.Menu.insert_script_link({
+          name:      'wanikani_pitch_info',
+          submenu:   'WaniKani Pitch Info',
+          title:     'Settings',
+          on_click:  open_settings
+      });
+
+      wkof.Settings.load('wanikani_pitch_info');
+  }
+
+  function open_settings() {
+      var config = {
+          script_id: 'wanikani_pitch_info',
+          title: 'WaniKani Pitch Info Settings',
+          autosave: true,
+          content: {
+              display_pitch_beside_question: {
+                  type: 'checkbox',
+                  label: 'Display pitch beside question',
+                  default: false,
+                  hover_tip: 'After successfully completing a reading review, display pitch beside the question.',
+              },
+          }
+      }
+      var dialog = new wkof.Settings(config);
+      dialog.open();
+  }
+
+  function startup() {
+    wkItemInfo.forType('vocabulary').under('reading').notifyWhenVisible(injectPitchInfo);
+    wkItemInfo.forType('kanaVocabulary').under('meaning').notifyWhenVisible(injectPitchInfo);
+    addCss();
+    loadWhileIdle();
+    setupInjectPitchIntoReviewQuestionArea();
+  }
 
   function setupInjectPitchIntoReviewQuestionArea() {
     // Injects pitch accent and reading into question area.
@@ -86,21 +130,18 @@
     window.wkPitchInfoScriptObjectsToRemove = [];
     window.addEventListener('didAnswerQuestion', (ev) => {
       // didAnswerQuestion will be triggered whenever the user answers a question
-      if (ev.detail.questionType == 'reading' && ev.detail.results.action == 'pass') {
+      if (wkof.settings.wanikani_pitch_info?.display_pitch_beside_question && ev.detail.questionType == 'reading' && ev.detail.results.action == 'pass') {
         let divQuestion = document.querySelector("#turbo-body > div.quiz > div > div.character-header.character-header--vocabulary > div > div.character-header__characters");
         wkItemInfo.currentState.reading.forEach(reading => {
           // Create a white box in the question area
           var divOuter = document.createElement("div");
           divOuter.setAttribute('class', 'additional-content__content additional-content__content--open subject-section subject-section--reading subject-section--collapsible subject-section__subsection subject-readings-with-audio subject-readings-with-audio__item');
-          divOuter.style.boxShadow = "0px 0px 0px #e3e3e3";
-          divOuter.style.border = "0px solid #d4d4d4;";
 
           // Create a div to store the reading
           var divReading = document.createElement("div");
           divReading.setAttribute('class', 'reading-with-audio__reading question-pitch-display');
           divReading.setAttribute('lang', 'ja');
           divReading.innerHTML = `${reading}`;
-          divReading.style.color = "#333";
           divOuter.appendChild(divReading);
 
           divQuestion.insertAdjacentElement('afterend', divOuter);
@@ -114,7 +155,7 @@
     // Cleans up the objects that we inject into the question area
     window.addEventListener('willShowNextQuestion', (ev) => {
       // willShowNextQuestion will be triggered whenever a new question is to be loaded
-      // Register a callback here to
+      // Register a callback here to clean up the pitches that we insert into the question area.
       window.wkPitchInfoScriptObjectsToRemove.forEach(pObject => {
         while (pObject.firstChild) { pObject.removeChild(pObject.firstChild); }
         pObject.remove();
