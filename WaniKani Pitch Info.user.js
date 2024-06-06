@@ -3,7 +3,7 @@
 // @match        https://www.wanikani.com/*
 // @match        https://preview.wanikani.com/*
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.76
+// @version      0.77
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
@@ -89,12 +89,16 @@ var wkof = null;
           .then(startup).then(setupInjectPitchIntoReviewQuestionArea);
 
       function install_menu() {
-          wkof.Menu.insert_script_link({
-              name:      'wanikani_pitch_info',
-              submenu:   'WaniKani Pitch Info',
-              title:     'Settings',
-              on_click:  open_settings
-          });
+          try {
+              wkof.Menu.insert_script_link({
+                  name:      'wanikani_pitch_info',
+                  submenu:   'WaniKani Pitch Info',
+                  title:     'Settings',
+                  on_click:  open_settings
+              });
+          } catch (e) {
+              console.error(e);
+          }
 
           wkof.Settings.load('wanikani_pitch_info');
       }
