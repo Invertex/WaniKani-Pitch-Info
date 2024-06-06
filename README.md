@@ -7,3 +7,6 @@ Aims to help with learning the proper pitch of words as you're learning the word
 ![](https://i.imgur.com/IrpfGPj.png)
 
 # Auto-updating install at: https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
+
+For an extra preview that shows beside the word on success you need to install the [WKOF script as well](https://community.wanikani.com/t/installing-wanikani-open-framework/28549).
+ ![](https://raw.githubusercontent.com/Invertex/WaniKani-Pitch-Info/master/preview2.png)
