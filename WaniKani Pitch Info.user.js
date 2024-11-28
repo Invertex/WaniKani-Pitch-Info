@@ -25,10 +25,10 @@ var wkof = null;
   wkof = unsafeWindow.wkof;
 
   const SHOW_PITCH_DESCRIPTION = true;
-  const SQUASH_DIGRAPHS        = false;
-  const PRE_PARSE              = false; // load entire "accents.txt" into an object for faster lookup (true: lookup takes ~0.06ms; false: lookup takes ~0.5ms)
-  const DOT_RADIUS             = 0.2;
-  const STROKE_WIDTH           = 0.1;
+  const SQUASH_DIGRAPHS = false;
+  const PRE_PARSE = false; // load entire "accents.txt" into an object for faster lookup (true: lookup takes ~0.06ms; false: lookup takes ~0.5ms)
+  const DOT_RADIUS = 0.2;
+  const STROKE_WIDTH = 0.1;
 
   const WEB_URL = 'http://www.gavo.t.u-tokyo.ac.jp/ojad/search/index/curve:fujisaki/word:%s';
   let digraphs = 'ぁぃぅぇぉゃゅょゎゕゖァィゥェォャュョヮヵヶ';
@@ -79,98 +79,113 @@ var wkof = null;
 
   // Check for WaniKani Open Framework
   if (!wkof) {
-      console.warn('WaniKani Pitch Info has extra features enabled by the WK Open Framework.\n Visit: https://community.wanikani.com/t/instructions-installing-wanikani-open-framework/28549 to install.');
-      startup();
-  }
-  else {
-      wkof.include('Menu,Settings');
-      wkof.ready('Menu,Settings')
-          .then(install_menu)
-          .then(startup).then(setupInjectPitchIntoReviewQuestionArea);
+    console.warn('WaniKani Pitch Info has extra features enabled by the WK Open Framework.\n Visit: https://community.wanikani.com/t/instructions-installing-wanikani-open-framework/28549 to install.');
+    startup();
+  } else {
+    wkof.include('Menu,Settings');
+    wkof.ready('Menu,Settings')
+      .then(install_menu)
+      .then(startup)
+      .then(setupInjectPitchIntoReviewQuestionArea);
 
-      function install_menu() {
-          try {
-              wkof.Menu.insert_script_link({
-                  name:      'wanikani_pitch_info',
-                  submenu:   'Settings',
-                  title:     'WaniKani Pitch Info',
-                  on_click:  open_settings
-              });
-          } catch (e) {
-              console.error(e);
+    function install_menu() {
+      try {
+        wkof.Menu.insert_script_link({
+          name: 'wanikani_pitch_info',
+          submenu: 'Settings',
+          title: 'WaniKani Pitch Info',
+          on_click: open_settings
+        });
+      } catch (e) {
+        console.error(e);
+      }
+
+      wkof.Settings.load('wanikani_pitch_info');
+    }
+
+    function open_settings() {
+      var config = {
+        script_id: 'wanikani_pitch_info',
+        title: 'WaniKani Pitch Info Settings',
+        autosave: true,
+        content: {
+          display_pitch_beside_question: {
+            type: 'checkbox',
+            label: 'Display pitch beside question',
+            default: false,
+            hover_tip: 'After successfully completing a reading review, display pitch beside the question.',
+          },
+        }
+      }
+      var dialog = new wkof.Settings(config);
+      dialog.open();
+    }
+
+    function setupInjectPitchIntoReviewQuestionArea() {
+      // Injects pitch accent and reading into question area.
+      // Pitch is only displayed when the user enters a correct reading
+      window.wkPitchInfoScriptObjectsToRemove = [];
+      window.addEventListener('didAnswerQuestion', (ev) => {
+        console.log("didAnswerQuestion");
+        // didAnswerQuestion will be triggered whenever the user answers a question
+        if (wkof.settings.wanikani_pitch_info?.display_pitch_beside_question && ev.detail.questionType == 'reading' && ev.detail.results.action == 'pass') {
+          let divQuestion = document.querySelector("#turbo-body > div.quiz > div > div.character-header.character-header--vocabulary > div > div.character-header__characters");
+          if (!divQuestion) return;
+
+          // Check if pitch info has already been added to avoid duplicates
+          if (divQuestion.querySelector('.question-pitch-display')) return;
+
+          // Find out the readings from Wanikani
+          const quizInput = Stimulus.getControllerForElementAndIdentifier(document.querySelector('[data-controller~="quiz-input"]'), 'quiz-input');
+          const wkReadings = quizInput?.currentSubject?.readings;
+          if (!wkReadings) return;
+
+          // For each reading, add the pitch into the area next to the question
+          for (const wkReading of wkReadings) {
+            const reading = wkReading.text;
+            console.log(`reading: ${reading}`);
+            if (!reading) continue;
+
+            // Create a white box in the question area
+            var divOuter = document.createElement("div");
+            divOuter.setAttribute('class', 'additional-content__content additional-content__content--open subject-section subject-section--reading subject-section--collapsible subject-section__subsection subject-readings-with-audio subject-readings-with-audio__item');
+
+            // Create a div to store the reading
+            var divReading = document.createElement("div");
+            divReading.setAttribute('class', 'reading-with-audio__reading question-pitch-display');
+            divReading.setAttribute('lang', 'ja');
+            divReading.innerHTML = `${reading}`;
+            divOuter.appendChild(divReading);
+
+            divQuestion.insertAdjacentElement('afterend', divOuter);
+            window.wkPitchInfoScriptObjectsToRemove.push(divOuter);
+
+            injectPitchInfoToSingleElement(wkItemInfo.currentState, divReading);
+          };
+        }
+      })
+
+      // Cleans up the objects that we inject into the question area
+      window.addEventListener('willShowNextQuestion', (ev) => {
+        // willShowNextQuestion will be triggered whenever a new question is to be loaded
+        // Register a callback here to clean up the pitches that we insert into the question area.
+        window.wkPitchInfoScriptObjectsToRemove.forEach(pObject => {
+          while (pObject.firstChild) {
+            pObject.removeChild(pObject.firstChild);
           }
-
-          wkof.Settings.load('wanikani_pitch_info');
-      }
-
-      function open_settings() {
-          var config = {
-              script_id: 'wanikani_pitch_info',
-              title: 'WaniKani Pitch Info Settings',
-              autosave: true,
-              content: {
-                  display_pitch_beside_question: {
-                      type: 'checkbox',
-                      label: 'Display pitch beside question',
-                      default: false,
-                      hover_tip: 'After successfully completing a reading review, display pitch beside the question.',
-                  },
-              }
-          }
-          var dialog = new wkof.Settings(config);
-          dialog.open();
-      }
-
-      function setupInjectPitchIntoReviewQuestionArea() {
-          // Injects pitch accent and reading into question area.
-          // Pitch is only displayed when the user enters a correct reading
-          window.wkPitchInfoScriptObjectsToRemove = [];
-          window.addEventListener('didAnswerQuestion', (ev) => {
-              console.log("setup listener");
-              // didAnswerQuestion will be triggered whenever the user answers a question
-              if (wkof.settings.wanikani_pitch_info?.display_pitch_beside_question && ev.detail.questionType == 'reading' && ev.detail.results.action == 'pass') {
-                  let divQuestion = document.querySelector("#turbo-body > div.quiz > div > div.character-header.character-header--vocabulary > div > div.character-header__characters");
-                  wkItemInfo.currentState.reading.forEach(reading => {
-                      console.log("reading");
-                      // Create a white box in the question area
-                      var divOuter = document.createElement("div");
-                      divOuter.setAttribute('class', 'additional-content__content additional-content__content--open subject-section subject-section--reading subject-section--collapsible subject-section__subsection subject-readings-with-audio subject-readings-with-audio__item');
-
-                      // Create a div to store the reading
-                      var divReading = document.createElement("div");
-                      divReading.setAttribute('class', 'reading-with-audio__reading question-pitch-display');
-                      divReading.setAttribute('lang', 'ja');
-                      divReading.innerHTML = `${reading}`;
-                      divOuter.appendChild(divReading);
-
-                      divQuestion.insertAdjacentElement('afterend', divOuter);
-                      window.wkPitchInfoScriptObjectsToRemove.push(divOuter);
-
-                      injectPitchInfoToSingleElement(wkItemInfo.currentState, divReading);
-                  });
-              }
-          })
-
-          // Cleans up the objects that we inject into the question area
-          window.addEventListener('willShowNextQuestion', (ev) => {
-              // willShowNextQuestion will be triggered whenever a new question is to be loaded
-              // Register a callback here to clean up the pitches that we insert into the question area.
-              window.wkPitchInfoScriptObjectsToRemove.forEach(pObject => {
-                  while (pObject.firstChild) { pObject.removeChild(pObject.firstChild); }
-                  pObject.remove();
-              });
-              window.wkPitchInfoScriptObjectsToRemove = [];
-          })
-      }
+          pObject.remove();
+        });
+        window.wkPitchInfoScriptObjectsToRemove = [];
+      })
+    }
   }
+
   function startup() {
     wkItemInfo.forType('vocabulary').under('reading').notifyWhenVisible(injectPitchInfo);
     wkItemInfo.forType('kanaVocabulary').under('meaning').notifyWhenVisible(injectPitchInfo);
     addCss();
     loadWhileIdle();
   }
-
-
 
   function injectPitchInfoToSingleElement(injectorState, pReading) {
     let reading = pReading.textContent;
@@ -189,7 +204,9 @@ var wkof = null;
     let diagrams = pitchInfo.map(p => drawPitchDiagram(p, reading));
     pReading.before(...diagrams);
     if ("injector" in injectorState) {
-      [...diagrams, dInfo].forEach(d => { if (d) injectorState.injector.registerAppendedElement(d); });
+      [...diagrams, dInfo].forEach(d => {
+        if (d) injectorState.injector.registerAppendedElement(d);
+      });
     }
     makeMonospaced(pReading.childNodes[0]);
   }
@@ -240,10 +257,10 @@ var wkof = null;
     }
     let lookupObject = {};
     let matches = accents.matchAll(/^([^\t]+\t[^\t]+)\t(.+)$/gm);
-    for (const match of matches) lookupObject[match[1]] = match[2];             // fastest
-//  let matches = [...accents.matchAll(/^([^\t]+\t[^\t]+)\t(.+)$/gm)];
-//  lookupObject = matches.reduce((o, m) => { o[m[1]] = m[2]; return o; }, {}); // faster
-//  lookupObject = Object.fromEntries(matches.map(m => [m[1], m[2]]));          // slower
+    for (const match of matches) lookupObject[match[1]] = match[2]; // fastest
+    //  let matches = [...accents.matchAll(/^([^\t]+\t[^\t]+)\t(.+)$/gm)];
+    //  lookupObject = matches.reduce((o, m) => { o[m[1]] = m[2]; return o; }, {}); // faster
+    //  lookupObject = Object.fromEntries(matches.map(m => [m[1], m[2]]));          // slower
     pitchLookup = (vocab, reading) => pitchLookupObject(vocab, reading, lookupObject);
   }
 
@@ -315,7 +332,10 @@ var wkof = null;
       if (i === 0) return 1;
       return i < pitchNum ? 0 : 1;
     });
-    let points = yCoords.map((y, i) => ({x: xCoords[i], y}));
+    let points = yCoords.map((y, i) => ({
+      x: xCoords[i],
+      y
+    }));
 
     let polyline = document.createElementNS(namespace, 'polyline');
     polyline.setAttribute('fill', 'none');
@@ -340,7 +360,6 @@ var wkof = null;
     p.lang = 'ja'; // to match the WK CSS selector containing the reading font size
     p.appendChild(svg);
     return p;
-    return svg;
   }
 
   function generatePatternText(pitchNum, vocab, reading) {
@@ -361,7 +380,9 @@ var wkof = null;
   function makeMonospaced(textNode) {
     let characters = [...textNode.textContent];
     if (SQUASH_DIGRAPHS) {
-      characters.forEach((c, i, a) => { if (digraphs.includes(c)) a[i - 1] += c; });
+      characters.forEach((c, i, a) => {
+        if (digraphs.includes(c)) a[i - 1] += c;
+      });
       characters = characters.filter(c => !digraphs.includes(c));
     }
     let spans = characters.map(c => {
@@ -387,7 +408,14 @@ var wkof = null;
       .pitch-pattern + .subject-readings-with-audio__audio-items                              { margin-top: 0.6em; }
       .character-header .question-pitch-display > span                                        { color: rgb(255 255 255); }
       .character-header .additional-content__content:has(> .pitch-diagram) { background-color: rgba(0.2, 0.2, 0.2, 0.2); border-style: none; padding: 6px 8px; box-shadow: rgb(227, 227, 227) 0px 2px 4px !important; text-shadow: 0 2px black; }
-      ${Object.values(patternObj).map(({color, cssClass}) => `.${cssClass} { color: ${color}; }`).join('')}`;
+      ${Object.values(patternObj).map(({color, cssClass}) => `.$ {
+      cssClass
+    } {
+      color: $ {
+        color
+      };
+    }
+    `).join('')}`;
     document.head.appendChild(style);
   }
 })();
