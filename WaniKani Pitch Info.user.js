@@ -137,7 +137,6 @@ var wkof = null;
 
           // For each reading, add the pitch into the area next to the question
           for (const reading of wkItemInfo.currentState.reading) {
-            const reading = wkReading.text;
             console.log(`reading: ${reading}`);
             if (!reading) continue;
 
