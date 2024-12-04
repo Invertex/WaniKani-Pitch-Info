@@ -3,7 +3,7 @@
 // @match        https://www.wanikani.com/*
 // @match        https://preview.wanikani.com/*
 // @namespace    https://greasyfork.org/en/scripts/31070-wanikani-pitch-info
-// @version      0.80
+// @version      0.81
 // @description  Displays pitch accent diagrams on WaniKani vocab and session pages.
 // @author       Invertex
 // @supportURL   http://invertex.xyz
@@ -135,14 +135,8 @@ var wkof = null;
           // Check if pitch info has already been added to avoid duplicates
           if (divQuestion.querySelector('.question-pitch-display')) return;
 
-          // Find out the readings from Wanikani
-          const quizInput = Stimulus.getControllerForElementAndIdentifier(document.querySelector('[data-controller~="quiz-input"]'), 'quiz-input');
-          const wkReadings = quizInput?.currentSubject?.readings;
-          if (!wkReadings) return;
-
           // For each reading, add the pitch into the area next to the question
-          for (const wkReading of wkReadings) {
-            const reading = wkReading.text;
+          for (const reading of wkItemInfo.currentState.reading) {
             console.log(`reading: ${reading}`);
             if (!reading) continue;
 
